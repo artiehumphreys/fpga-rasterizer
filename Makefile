@@ -1,10 +1,22 @@
 REMOTE=workstation
 REMOTE_DIR=~/fpga-rasterizer
 
+CXX=c++
+CXXFLAGS=-std=c++23 -Wall -Wextra -O2
+HOST_SRC=host/main.cpp
+HOST_BIN=build/rasterizer
+
 VIVADO_SETTINGS=/tools/Xilinx/2025.2/Vivado/settings64.sh
 VITIS_SETTINGS=/tools/Xilinx/2025.2/Vitis/settings64.sh
 
 SOURCE_TOOLS=source $(VIVADO_SETTINGS) && source $(VITIS_SETTINGS)
+
+native: $(HOST_SRC)
+	mkdir -p build
+	$(CXX) $(CXXFLAGS) $(HOST_SRC) -o $(HOST_BIN)
+
+run: native
+	./$(HOST_BIN)
 
 setup:
 	ssh $(REMOTE) 'echo "source $(VIVADO_SETTINGS)" >> ~/.bash_profile && echo "source $(VITIS_SETTINGS)" >> ~/.bash_profile'
