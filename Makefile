@@ -3,7 +3,7 @@ REMOTE_DIR=~/fpga-rasterizer
 
 CXX=c++
 CXXFLAGS=-std=c++23 -Wall -Wextra -O2
-HOST_SRC=host/main.cpp
+HOST_SRC=host/main.cpp src/rasterizer.cpp
 HOST_BIN=build/rasterizer
 
 VIVADO_SETTINGS=/tools/Xilinx/2025.2/Vivado/settings64.sh
