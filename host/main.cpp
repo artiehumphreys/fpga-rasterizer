@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <memory>
 
-#include "../src/rasterizer.hpp"
+#include "rasterizer.hpp"
 #include "ppm.hpp"
 
 int main() {

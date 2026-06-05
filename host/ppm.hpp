@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "../src/framebuffer.hpp"
+#include "framebuffer.hpp"
 
 // write the framebuffer as a binary PPM. Alpha is dropped since
 // PPM is RGB.

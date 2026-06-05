@@ -6,8 +6,6 @@
 #include "geometry.hpp"
 #include "pixel.hpp"
 
-// Reusable primitive: fill triangle ABC into fb with a flat color.
-// Header-visible because it is a template; instantiated by the concrete top.
 template <int W, int H>
 void draw_triangle(FrameBuffer<W, H> &fb, Point A, Point B, Point C,
                    Pixel color) {
@@ -25,7 +23,5 @@ void draw_triangle(FrameBuffer<W, H> &fb, Point A, Point B, Point C,
   }
 }
 
-// Concrete v1 entry point. This is the function HLS synthesizes (syn.top), and
-// the same one the host harness calls, so native and FPGA render the identical
-// scene for golden-reference comparison.
+// Concrete v1 entry point. This is the function HLS synthesizes (syn.top)
 void rasterizer(FrameBuffer<1920, 1080> &fb);
