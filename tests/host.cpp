@@ -23,3 +23,8 @@ void test_triangle_rasterization() {
     }
   }
 }
+
+int main() {
+  test_triangle_rasterization();
+  return 0;
+}
