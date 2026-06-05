@@ -18,7 +18,8 @@ void test_triangle_rasterization() {
   for (int y = 0; y < H; ++y) {
     for (int x = 0; x < W; ++x) {
       bool is_set = fb.data[fb.get_pixel_addr(x, y)].r == 255;
-      assert(is_set == expected[y][x]);
+      bool want = expected[y][x] == '#';
+      assert(is_set == want);
     }
   }
 }
