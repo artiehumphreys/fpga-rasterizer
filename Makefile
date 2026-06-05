@@ -2,7 +2,7 @@ REMOTE=workstation
 REMOTE_DIR=~/fpga-rasterizer
 
 CXX=c++
-CXXFLAGS=-std=c++23 -Wall -Wextra -O2
+CXXFLAGS=-std=c++23 -Wall -Wextra -O2 -Isrc -Ihost
 HOST_SRC=host/main.cpp src/rasterizer.cpp
 HOST_BIN=build/rasterizer
 
