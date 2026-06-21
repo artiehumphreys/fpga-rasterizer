@@ -1,7 +1,14 @@
 #pragma once
 
+#include "pixel.hpp"
+
 struct Point {
   int x, y;
+};
+
+struct Triangle {
+  Point a, b, c;
+  Pixel color;
 };
 
 constexpr int calculate_cross_product(Point A, Point B, Point P) {
@@ -10,12 +17,12 @@ constexpr int calculate_cross_product(Point A, Point B, Point P) {
   return lhs - rhs;
 }
 
-constexpr bool is_inside_triangle(Point A, Point B, Point C, Point P) {
+constexpr bool is_inside_triangle(Triangle T, Point p) {
   // NOTE: Instead of depending on CW ordering of points, just check that
   // determinant signs match
-  int d0 = calculate_cross_product(A, B, P);
-  int d1 = calculate_cross_product(B, C, P);
-  int d2 = calculate_cross_product(C, A, P);
+  int d0 = calculate_cross_product(T.a, T.b, p);
+  int d1 = calculate_cross_product(T.b, T.c, p);
+  int d2 = calculate_cross_product(T.c, T.a, p);
 
   bool has_neg = (d0 < 0) || (d1 < 0) || (d2 < 0);
   bool has_pos = (d0 > 0) || (d1 > 0) || (d2 > 0);
