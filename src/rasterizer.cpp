@@ -6,7 +6,12 @@ static const Triangle scene[] = {
     {{300, 600}, {700, 800}, {300, 900}, {0, 0, 255, 255}},
 };
 
-void rasterizer(FrameBuffer<1920, 1080> &fb) {
+void rasterizer(Pixel *fb_mem) {
+#ifdef __SYNTHESIS__
+#pragma HLS INTERFACE m_axi port = fb_mem offset = slave bundle = gmem0
+#pragma HLS INTERFACE s_axilite port = return
+#endif
+  FrameBuffer<1920, 1080> fb{fb_mem};
   fb.clear();
   draw_triangles(fb, scene, sizeof(scene) / sizeof(scene[0]));
 }

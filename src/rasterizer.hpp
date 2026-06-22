@@ -14,6 +14,10 @@ template <int W, int H> void draw_triangle(FrameBuffer<W, H> &fb, Triangle T) {
 
   for (int y = min_y; y <= max_y; ++y) {
     for (int x = min_x; x <= max_x; ++x) {
+#ifdef __SYNTHESIS__
+#pragma HLS loop_tripcount min = 1 max = 1920
+#pragma HLS pipeline II = 1
+#endif
       if (is_inside_triangle(T, {x, y})) {
         fb.set_pixel(x, y, color);
       }
@@ -28,4 +32,4 @@ void draw_triangles(FrameBuffer<W, H> &fb, const Triangle *tris, int n) {
   }
 }
 
-void rasterizer(FrameBuffer<1920, 1080> &fb);
+void rasterizer(Pixel *fb_mem);

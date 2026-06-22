@@ -12,7 +12,8 @@ void test_triangle_rasterization() {
   Point A{6, 2}, B{2, 2}, C{4, 4};
   Pixel P{255, 0, 0, 255};
 
-  FrameBuffer<W, H> fb;
+  Pixel storage[W * H];
+  FrameBuffer<W, H> fb{storage};
   fb.clear();
   draw_triangle(fb, {A, B, C, P});
 
@@ -32,12 +33,14 @@ void test_draw_triangles_draws_all() {
   Triangle t1{{0, 0}, {3, 0}, {0, 3}, P};
   Triangle scene[2] = {t0, t1};
 
-  FrameBuffer<W, H> expected;
+  Pixel expected_storage[W * H];
+  FrameBuffer<W, H> expected{expected_storage};
   expected.clear();
   draw_triangle(expected, t0);
   draw_triangle(expected, t1);
 
-  FrameBuffer<W, H> actual;
+  Pixel actual_storage[W * H];
+  FrameBuffer<W, H> actual{actual_storage};
   actual.clear();
   draw_triangles(actual, scene, 2);
 
@@ -52,7 +55,8 @@ void test_clips_offscreen_triangle() {
       ".....", ".....", "..###", "..###", "..###",
   };
 
-  FrameBuffer<W, H> fb;
+  Pixel storage[W * H];
+  FrameBuffer<W, H> fb{storage};
   fb.clear();
   draw_triangle(fb, {{2, 2}, {2, 8}, {8, 2}, {255, 0, 0, 255}});
 
@@ -66,7 +70,8 @@ void test_clips_offscreen_triangle() {
 
 void test_offscreen_triangle_draws_nothing() {
   const int W = 5, H = 5;
-  FrameBuffer<W, H> fb;
+  Pixel storage[W * H];
+  FrameBuffer<W, H> fb{storage};
   fb.clear();
   draw_triangle(fb, {{10, 10}, {12, 10}, {10, 12}, {255, 0, 0, 255}});
 
