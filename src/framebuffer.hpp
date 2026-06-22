@@ -26,7 +26,9 @@ template <int W, int H> struct FrameBuffer {
     for (int y = 0; y < H; ++y) {
       for (int x = 0; x < W; ++x) {
 #ifdef __SYNTHESIS__
-#pragma HLS pipeline II = 1
+// NOTE: II=2 floor for now
+// bursting per-scanline would reach II=1 if write throughput matters.
+#pragma HLS pipeline II = 2
 #endif
         data[get_pixel_addr(x, y)] = p;
       }
