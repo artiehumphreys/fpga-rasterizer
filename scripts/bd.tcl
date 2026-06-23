@@ -62,15 +62,16 @@ connect_bd_net $arstn [get_bd_pins mig_7series_0/aresetn]
 
 make_bd_intf_pins_external [get_bd_intf_pins mig_7series_0/DDR3]
 
-create_bd_port -dir I -type clk sys_clk
+create_bd_port -dir I -type clk -freq_hz 50000000 sys_clk
 connect_bd_net [get_bd_ports sys_clk] [get_bd_pins clk_wiz_0/clk_in1]
 
-set_property CONFIG.C_EXT_RESET_HIGH {0}    [get_bd_cells proc_sys_reset_0]
+# proc_sys_reset ext_reset_in defaults active-low — matches sys_rst_n.
+# ACTIVE_LOW renames clk_wiz's reset pin to resetn.
 set_property CONFIG.RESET_TYPE {ACTIVE_LOW} [get_bd_cells clk_wiz_0]
 create_bd_port -dir I -type rst sys_rst_n
 connect_bd_net [get_bd_ports sys_rst_n] [get_bd_pins mig_7series_0/sys_rst]
 connect_bd_net [get_bd_ports sys_rst_n] [get_bd_pins proc_sys_reset_0/ext_reset_in]
-connect_bd_net [get_bd_ports sys_rst_n] [get_bd_pins clk_wiz_0/reset]
+connect_bd_net [get_bd_ports sys_rst_n] [get_bd_pins clk_wiz_0/resetn]
 
 # map DDR3 + control registers into the address space
 assign_bd_address

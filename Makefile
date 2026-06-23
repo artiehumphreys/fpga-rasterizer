@@ -31,7 +31,8 @@ csim: sync
 	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vitis-run --mode hls --csim --config scripts/hls_config.cfg --work_dir build/'
 
 # C/RTL co-simulation: verifies generated RTL matches the C model.
-# WARNING: simulates a full 1080p frame -> millions of cycles,
-# can run very long.
 cosim: build
 	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vitis-run --mode hls --cosim --config scripts/hls_config.cfg --work_dir build/'
+
+bd: sync
+	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vivado -mode batch -source scripts/bd.tcl 2>&1'
