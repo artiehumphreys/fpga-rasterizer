@@ -16,6 +16,7 @@ template <int W, int H> void draw_triangle(FrameBuffer<W, H> &fb, Triangle T) {
     for (int x = min_x; x <= max_x; ++x) {
 #ifdef __SYNTHESIS__
 #pragma HLS loop_tripcount min = 1 max = 1920
+// TODO: per-scanline burst writes to reach II=1
 #pragma HLS pipeline II = 2
 #endif
       if (is_inside_triangle(T, {x, y})) {

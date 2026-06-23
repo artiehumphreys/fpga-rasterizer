@@ -24,6 +24,7 @@ template <int W, int H> struct FrameBuffer {
 
   void clear(Pixel p = {}) {
     // II=2 floor: HLS won't coalesce these into a burst write
+    // TODO: memcpy-style burst rewrite to reach II=1 if fill throughput matters
     for (int i = 0; i < W * H; ++i) {
 #ifdef __SYNTHESIS__
 #pragma HLS pipeline II = 2
