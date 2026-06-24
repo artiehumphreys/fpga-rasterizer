@@ -20,11 +20,14 @@ create_bd_design $bd_name
 set mig [create_bd_cell -type ip -vlnv xilinx.com:ip:mig_7series mig_7series_0]
 set_property CONFIG.XML_INPUT_FILE [pwd]/boards/wukong/mig.prj $mig
 
-# Clock wizard: 50 MHz board clock -> 166.666 MHz that the MIG wants.
+# Clock wizard: 50 MHz board clock -> 166.666 MHz MIG sys clock + 200 MHz MIG
+# IODELAY reference (7-series IDELAYCTRL needs exactly 200 MHz to calibrate taps).
 set clk [create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz clk_wiz_0]
 set_property -dict {
   CONFIG.PRIM_IN_FREQ               {50.000}
   CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {166.666}
+  CONFIG.CLKOUT2_USED               {true}
+  CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {200.000}
 } $clk
 
 create_bd_cell -type ip -vlnv xilinx.com:ip:jtag_axi jtag_axi_0
@@ -45,6 +48,8 @@ connect_bd_intf_net [get_bd_intf_pins smartconnect_0/M01_AXI]   [get_bd_intf_pin
 
 # clocks
 connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins mig_7series_0/sys_clk_i]
+# 200 MHz IODELAY reference clock for the DDR3 PHY
+connect_bd_net [get_bd_pins clk_wiz_0/clk_out2] [get_bd_pins mig_7series_0/clk_ref_i]
 # MIG's user clock is the single AXI clock domain for everything else
 set uiclk [get_bd_pins mig_7series_0/ui_clk]
 connect_bd_net $uiclk [get_bd_pins smartconnect_0/aclk]

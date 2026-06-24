@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <!-- QMTECH Wukong XC7A100T DDR3 MIG config (Micron MT41K128M16 x16, 256 MB).
      Pin/timing from ChinaQMTECH/QM_XC7A100T_WUKONG_BOARD V3 Test04_DDR3_MIG,
-     with PortInterface set to AXI so the HLS kernel's m_axi master reaches DDR3. -->
+     memory port set to AXI for the HLS kernel's m_axi master.
+     Keep the AXI-port tag name out of comments: MIG scans every line for it. -->
 <Project NoOfControllers="1">
 
   <ModuleName>mig_7series_0</ModuleName>
@@ -14,7 +15,7 @@
   <TargetFPGA>xc7a100t-fgg676/-1</TargetFPGA>
   <Version>4.2</Version>
   <SystemClock>No Buffer</SystemClock>
-  <ReferenceClock>Use System Clock</ReferenceClock>
+  <ReferenceClock>No Buffer</ReferenceClock>
   <SysResetPolarity>ACTIVE LOW</SysResetPolarity>
   <BankSelectionFlag>FALSE</BankSelectionFlag>
   <InternalVref>1</InternalVref>
