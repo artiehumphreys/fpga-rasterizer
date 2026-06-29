@@ -1,5 +1,4 @@
-# make program and read the framebuffer back from DDR3.
-# Register map: xrasterizer_hw.h. AXI map (from jtag_axi): control @0x0, DDR3 @0x80000000.
+# Reg offsets from xrasterizer_hw.h; AXI map from jtag_axi: control @0x0, DDR3 @0x80000000.
 
 open_hw_manager
 connect_hw_server
@@ -22,7 +21,8 @@ proc axi_rd {axi addr} {
   return [get_property DATA [get_hw_axi_txns t]]
 }
 
-# framebuffer pointer (fb_mem, 64-bit) = DDR3 base
+proc ap_done {ctrl} { set v 0; scan $ctrl %x v; return [expr {($v >> 1) & 1}] }
+
 axi_wr $axi 00000010 80000000; # fb_mem[31:0]
 axi_wr $axi 00000014 00000000; # fb_mem[63:32]
 
@@ -31,16 +31,17 @@ axi_wr $axi 00000000 00000001
 set ctrl ffffffff
 for {set i 0} {$i < 200} {incr i} {
   set ctrl [axi_rd $axi 00000000]
-  if {[expr {0x$ctrl & 0x2}]} break
+  if {[ap_done $ctrl]} break
   after 10
 }
-if {![expr {0x$ctrl & 0x2}]} {
+if {![ap_done $ctrl]} {
   error "firstlight: kernel never asserted ap_done (ctrl=0x$ctrl)"
 }
 puts "firstlight: ap_done asserted (ctrl=0x$ctrl)"
 
-# read first 8 words of DDR3 (top-left pixels, RGBA little-endian per word)
+# pixel (1100,433) in the green triangle: 0x80000000 + (433*1920+1100)*4
 delete_hw_axi_txn -quiet r_fb
-create_hw_axi_txn r_fb $axi -address 80000000 -len 8 -type read
+create_hw_axi_txn r_fb $axi -address 8032d2b0 -type read
 run_hw_axi r_fb
-puts "firstlight: DDR3\[0x80000000\]+32B = [get_property DATA [get_hw_axi_txns r_fb]]"
+set got [get_property DATA [get_hw_axi_txns r_fb]]
+puts "firstlight: pixel(1100,433) = 0x$got (expect 0xff00ff00 green)"
