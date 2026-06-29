@@ -48,5 +48,12 @@ program: sync
 firstlight: sync
 	$(call REMOTE_RUN,vivado -mode batch -source scripts/firstlight.tcl)
 
+fullframe: sync
+	$(call REMOTE_RUN,vivado -mode batch -source scripts/fullframe.tcl)
+	scp $(REMOTE):$(REMOTE_DIR)/hw_fb.hex ./hw_fb.hex
+
+verify: run fullframe
+	diff -q golden_fb.hex hw_fb.hex && echo "hardware matches golden reference"
+
 ilacap: sync
 	$(call REMOTE_RUN,vivado -mode batch -source scripts/ilacap.tcl)
