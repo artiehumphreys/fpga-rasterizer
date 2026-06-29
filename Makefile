@@ -25,7 +25,7 @@ sync:
 	rsync -avz --exclude 'build/' ./ $(REMOTE):$(REMOTE_DIR)/
 
 build: sync
-	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && v++ -c --mode hls --config scripts/hls_config.cfg --work_dir build/ 2>&1'
+	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && v++ -c --mode hls --config scripts/hls_config.cfg --work_dir build/ '
 
 csim: sync
 	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vitis-run --mode hls --csim --config scripts/hls_config.cfg --work_dir build/'
@@ -35,4 +35,13 @@ cosim: build
 	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vitis-run --mode hls --cosim --config scripts/hls_config.cfg --work_dir build/'
 
 bd: sync
-	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vivado -mode batch -source scripts/bd.tcl 2>&1'
+	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vivado -mode batch -source scripts/bd.tcl '
+
+bit: sync
+	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vivado -mode batch -source scripts/bit.tcl '
+
+program: sync
+	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vivado -mode batch -source scripts/program.tcl '
+
+firstlight: sync
+	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vivado -mode batch -source scripts/firstlight.tcl '
