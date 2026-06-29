@@ -1,3 +1,6 @@
+# Misc Artifacts
+*.DS_Store
+
 # Build Artifacts
 build/
 out.ppm
