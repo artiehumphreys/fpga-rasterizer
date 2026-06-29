@@ -26,6 +26,7 @@ proc ap_done {ctrl} { set v 0; scan $ctrl %x v; return [expr {($v >> 1) & 1}] }
 axi_wr $axi 00000010 80000000; # fb_mem[31:0]
 axi_wr $axi 00000014 00000000; # fb_mem[63:32]
 
+axi_rd $axi 00000000; # clear stale ap_done (clear-on-read) before starting
 axi_wr $axi 00000000 00000001
 
 set ctrl ffffffff
