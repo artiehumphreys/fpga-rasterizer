@@ -40,6 +40,7 @@ for {set i 0} {$i < 200} {incr i} {
   if {[ap_done $ctrl]} break
   after 10
 }
+
 if {![ap_done $ctrl]} {
   error "firstlight: kernel never asserted ap_done (ctrl=0x$ctrl)"
 }
