@@ -11,6 +11,8 @@ VITIS_SETTINGS=/tools/Xilinx/2025.2/Vitis/settings64.sh
 
 SOURCE_TOOLS=source $(VIVADO_SETTINGS) && source $(VITIS_SETTINGS)
 
+REMOTE_RUN=ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && $(1)'
+
 native: $(HOST_SRC)
 	mkdir -p build
 	$(CXX) $(CXXFLAGS) $(HOST_SRC) -o $(HOST_BIN)
@@ -25,26 +27,26 @@ sync:
 	rsync -avz --exclude 'build/' ./ $(REMOTE):$(REMOTE_DIR)/
 
 build: sync
-	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && v++ -c --mode hls --config scripts/hls_config.cfg --work_dir build/'
+	$(call REMOTE_RUN,v++ -c --mode hls --config scripts/hls_config.cfg --work_dir build/)
 
 csim: sync
-	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vitis-run --mode hls --csim --config scripts/hls_config.cfg --work_dir build/'
+	$(call REMOTE_RUN,vitis-run --mode hls --csim --config scripts/hls_config.cfg --work_dir build/)
 
 # C/RTL co-simulation: verifies generated RTL matches the C model.
 cosim: build
-	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vitis-run --mode hls --cosim --config scripts/hls_config.cfg --work_dir build/'
+	$(call REMOTE_RUN,vitis-run --mode hls --cosim --config scripts/hls_config.cfg --work_dir build/)
 
 bd: sync
-	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vivado -mode batch -source scripts/bd.tcl'
+	$(call REMOTE_RUN,vivado -mode batch -source scripts/bd.tcl)
 
 bit: sync
-	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vivado -mode batch -source scripts/bit.tcl'
+	$(call REMOTE_RUN,vivado -mode batch -source scripts/bit.tcl)
 
 program: sync
-	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vivado -mode batch -source scripts/program.tcl'
+	$(call REMOTE_RUN,vivado -mode batch -source scripts/program.tcl)
 
 firstlight: sync
-	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vivado -mode batch -source scripts/firstlight.tcl'
+	$(call REMOTE_RUN,vivado -mode batch -source scripts/firstlight.tcl)
 
 ilacap: sync
-	ssh $(REMOTE) '$(SOURCE_TOOLS) && cd $(REMOTE_DIR) && vivado -mode batch -source scripts/ilacap.tcl'
+	$(call REMOTE_RUN,vivado -mode batch -source scripts/ilacap.tcl)
