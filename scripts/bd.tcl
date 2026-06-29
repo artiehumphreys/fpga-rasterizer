@@ -59,6 +59,18 @@ connect_bd_net $arstn [get_bd_pins jtag_axi_0/aresetn]
 connect_bd_net $arstn [get_bd_pins rasterizer_0/ap_rst_n]
 connect_bd_net $arstn [get_bd_pins mig_7series_0/aresetn]
 
+# ILA: passive monitor on the kernel's external reads/writes
+create_bd_cell -type ip -vlnv xilinx.com:ip:system_ila system_ila_0
+set_property -dict {
+  CONFIG.C_NUM_MONITOR_SLOTS   {1}
+  CONFIG.C_MON_TYPE            {INTERFACE}
+  CONFIG.C_SLOT_0_INTF_TYPE   {xilinx.com:interface:aximm_rtl:1.0}
+  CONFIG.C_DATA_DEPTH         {2048}
+} [get_bd_cells system_ila_0]
+connect_bd_intf_net [get_bd_intf_pins rasterizer_0/m_axi_gmem0] [get_bd_intf_pins system_ila_0/SLOT_0_AXI]
+connect_bd_net $uiclk [get_bd_pins system_ila_0/clk]
+connect_bd_net $arstn [get_bd_pins system_ila_0/resetn]
+
 make_bd_intf_pins_external [get_bd_intf_pins mig_7series_0/DDR3]
 
 create_bd_port -dir I -type clk -freq_hz 50000000 sys_clk

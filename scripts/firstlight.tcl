@@ -23,6 +23,11 @@ proc axi_rd {axi addr} {
 
 proc ap_done {ctrl} { set v 0; scan $ctrl %x v; return [expr {($v >> 1) & 1}] }
 
+# get DDR3 byte address (framebuffer is flat RGBA, 4 bytes/pixel)
+set FB_BASE 0x80000000
+set FB_W 1920
+proc px_addr {x y} { format %08x [expr {$::FB_BASE + ($y * $::FB_W + $x) * 4}] }
+
 axi_wr $axi 00000010 80000000; # fb_mem[31:0]
 axi_wr $axi 00000014 00000000; # fb_mem[63:32]
 
@@ -40,9 +45,8 @@ if {![ap_done $ctrl]} {
 }
 puts "firstlight: ap_done asserted (ctrl=0x$ctrl)"
 
-# pixel (1100,433) in the green triangle: 0x80000000 + (433*1920+1100)*4
 delete_hw_axi_txn -quiet r_fb
-create_hw_axi_txn r_fb $axi -address 8032d2b0 -type read
+create_hw_axi_txn r_fb $axi -address [px_addr 1100 433] -type read
 run_hw_axi r_fb
 set got [get_property DATA [get_hw_axi_txns r_fb]]
 puts "firstlight: pixel(1100,433) = 0x$got (expect 0xff00ff00 green)"
