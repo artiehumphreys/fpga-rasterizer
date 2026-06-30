@@ -13,12 +13,6 @@ int main() {
   rasterizer(buf.get());
 
   FrameBuffer<1920, 1080> fb{buf.get()};
-  const char *path = "out.ppm";
-  if (!write_ppm(fb, path)) {
-    std::fprintf(stderr, "failed to write %s\n", path);
-    return 1;
-  }
-  std::printf("wrote %s\n", path);
 
   const char *hex = "golden_fb.hex";
   std::FILE *f = std::fopen(hex, "w");
@@ -34,6 +28,7 @@ int main() {
       std::fprintf(f, "%08x\n", w);
     }
   }
+
   std::fclose(f);
   std::printf("wrote %s\n", hex);
   return 0;
