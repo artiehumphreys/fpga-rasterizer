@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<!-- QMTECH Wukong XC7A100T DDR3 MIG config (Micron MT41K128M16 x16, 256 MB).
-     Pin/timing from ChinaQMTECH/QM_XC7A100T_WUKONG_BOARD V3 Test04_DDR3_MIG,
-     memory port set to AXI for the HLS kernel's m_axi master.
-     Keep the AXI-port tag name out of comments: MIG scans every line for it. -->
 <Project NoOfControllers="1">
 
   <ModuleName>mig_7series_0</ModuleName>
@@ -50,7 +46,7 @@
     <ColAddress>10</ColAddress>
     <BankAddress>3</BankAddress>
     <MemoryVoltage>1.35V</MemoryVoltage>
-    <UserMemoryAddressMap>BANK_ROW_COLUMN</UserMemoryAddressMap>
+    <UserMemoryAddressMap>ROW_BANK_COLUMN</UserMemoryAddressMap>
     <PinSelection>
       <Pin IN_TERM="" IOSTANDARD="SSTL135" PADName="E17" SLEW="" VCCAUX_IO="" name="ddr3_addr[0]"/>
       <Pin IN_TERM="" IOSTANDARD="SSTL135" PADName="F20" SLEW="" VCCAUX_IO="" name="ddr3_addr[10]"/>

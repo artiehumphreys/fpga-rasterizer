@@ -1,10 +1,10 @@
 # System: 50MHz osc -> clk_wiz -> MIG (DDR3). JTAG-to-AXI + rasterizer kernel
 # share an AXI SmartConnect crossbar reaching DDR3 and the kernel's control regs.
 
-set part      xc7a100t-fgg676-1
-set proj_dir  build_vivado
+set part xc7a100t-fgg676-1
+set proj_dir build_vivado
 set proj_name rasterizer_fpga
-set bd_name   system
+set bd_name system
 
 file delete -force $proj_dir
 create_project $proj_name $proj_dir -part $part
@@ -21,9 +21,9 @@ set_property CONFIG.XML_INPUT_FILE [pwd]/boards/wukong/mig.prj $mig
 # Clock wizard: 50 MHz board clock -> 166.666 MHz MIG sys clock + 200 MHz MIG
 set clk [create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz clk_wiz_0]
 set_property -dict {
-  CONFIG.PRIM_IN_FREQ               {50.000}
+  CONFIG.PRIM_IN_FREQ {50.000}
   CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {166.666}
-  CONFIG.CLKOUT2_USED               {true}
+  CONFIG.CLKOUT2_USED {true}
   CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {200.000}
 } $clk
 
