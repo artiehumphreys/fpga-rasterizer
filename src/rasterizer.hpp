@@ -13,16 +13,20 @@ template <int W, int H> void draw_triangle(FrameBuffer<W, H> &fb, Triangle T) {
   int max_y = std::clamp(std::max({A.y, B.y, C.y}), 0, H - 1);
 
   for (int y = min_y; y <= max_y; ++y) {
-    for (int x = min_x; x <= max_x; ++x) {
+    int w = max_x - min_x + 1;
+    Pixel line[W];
+
+    std::memcpy(line, &fb.data[y * W + min_x], w * sizeof(Pixel));
+    for (int x = 0; x < w; ++x) {
 #ifdef __SYNTHESIS__
 #pragma HLS loop_tripcount min = 1 max = 1920
-// TODO: per-scanline burst writes to reach II=1
-#pragma HLS pipeline II = 2
+#pragma HLS pipeline II = 1
 #endif
-      if (is_inside_triangle(T, {x, y})) {
-        fb.set_pixel(x, y, color);
+      if (is_inside_triangle(T, {min_x + x, y})) {
+        line[x] = color;
       }
     }
+    std::memcpy(&fb.data[y * W + min_x], line, w * sizeof(Pixel));
   }
 }
 
