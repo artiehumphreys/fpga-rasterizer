@@ -22,9 +22,9 @@ bool write_ppm(const FrameBuffer<W, H> &fb, const std::string &path) {
   for (int y = 0; y < H; ++y) {
     for (int x = 0; x < W; ++x) {
       const Pixel &p = fb.data[FrameBuffer<W, H>::get_pixel_addr(x, y)];
-      rgb.push_back(p.r);
-      rgb.push_back(p.g);
-      rgb.push_back(p.b);
+      rgb.push_back(red(p));
+      rgb.push_back(green(p));
+      rgb.push_back(blue(p));
     }
   }
   out.write(reinterpret_cast<const char *>(rgb.data()),

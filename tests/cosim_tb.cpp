@@ -4,7 +4,7 @@
 #include "rasterizer.hpp"
 
 static bool is_rgb(const Pixel &p, int r, int g, int b) {
-  return p.r == r && p.g == g && p.b == b;
+  return red(p) == r && green(p) == g && blue(p) == b;
 }
 
 int main() {
