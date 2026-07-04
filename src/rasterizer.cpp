@@ -8,7 +8,9 @@ static const Triangle scene[] = {
 
 void rasterizer(Pixel *fb_mem) {
 #ifdef __SYNTHESIS__
-#pragma HLS INTERFACE m_axi port = fb_mem offset = slave bundle = gmem0
+#pragma HLS INTERFACE m_axi port = fb_mem offset = slave bundle =              \
+    gmem0 max_widen_bitwidth = 512 max_write_burst_length =                    \
+        256 max_read_burst_length = 256 num_write_outstanding = 8
 #pragma HLS INTERFACE s_axilite port = return
 #endif
   FrameBuffer<1920, 1080> fb{fb_mem};
