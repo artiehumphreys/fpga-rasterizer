@@ -8,15 +8,15 @@ static bool is_rgb(const Pixel &p, int r, int g, int b) {
 }
 
 int main() {
-  auto buf = std::make_unique<Pixel[]>(1920 * 1080);
+  auto buf = std::make_unique<Pixel[]>(FB_W * FB_H);
   rasterizer(buf.get());
 
-  auto at = [&](int x, int y) -> const Pixel & { return buf[y * 1920 + x]; };
+  auto at = [&](int x, int y) -> const Pixel & { return buf[y * FB_W + x]; };
 
   int fails = 0;
-  fails += !is_rgb(at(400, 266), 255, 0, 0);
-  fails += !is_rgb(at(1100, 433), 0, 255, 0);
-  fails += !is_rgb(at(433, 766), 0, 0, 255);
+  fails += !is_rgb(at(267, 178), 255, 0, 0);
+  fails += !is_rgb(at(733, 289), 0, 255, 0);
+  fails += !is_rgb(at(289, 511), 0, 0, 255);
   fails += !is_rgb(at(0, 0), 0, 0, 0);
 
   if (fails) {

@@ -1,9 +1,9 @@
 #include "rasterizer.hpp"
 
 static const Triangle scene[] = {
-    {{600, 200}, {200, 200}, {400, 400}, rgba(255, 0, 0, 255)},
-    {{900, 300}, {1300, 300}, {1100, 700}, rgba(0, 255, 0, 255)},
-    {{300, 600}, {700, 800}, {300, 900}, rgba(0, 0, 255, 255)},
+    {{400, 133}, {133, 133}, {267, 267}, rgba(255, 0, 0, 255)},
+    {{600, 200}, {867, 200}, {733, 467}, rgba(0, 255, 0, 255)},
+    {{200, 400}, {467, 533}, {200, 600}, rgba(0, 0, 255, 255)},
 };
 
 void rasterizer(Pixel *fb_mem) {
@@ -13,7 +13,7 @@ void rasterizer(Pixel *fb_mem) {
         256 max_read_burst_length = 256 num_write_outstanding = 8
 #pragma HLS INTERFACE s_axilite port = return
 #endif
-  FrameBuffer<1920, 1080> fb{fb_mem};
+  FrameBuffer<FB_W, FB_H> fb{fb_mem};
   fb.clear();
   draw_triangles(fb, scene, sizeof(scene) / sizeof(scene[0]));
 }

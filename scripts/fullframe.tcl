@@ -30,8 +30,8 @@ proc ap_done {ctrl} { set v 0; scan $ctrl %x v; return [expr {($v >> 1) & 1}] }
 
 # get DDR3 byte address (see firstlight.tcl)
 set FB_BASE 0x80000000
-set FB_W 1920
-set FB_H 1080
+set FB_W 1280
+set FB_H 720
 proc px_addr {x y} { format %08x [expr {$::FB_BASE + ($y * $::FB_W + $x) * 4}] }
 
 axi_wr $axi 00000010 80000000

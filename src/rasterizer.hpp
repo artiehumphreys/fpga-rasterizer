@@ -5,6 +5,9 @@
 #include "framebuffer.hpp"
 #include "geometry.hpp"
 
+constexpr int FB_W = 1280;
+constexpr int FB_H = 720;
+
 template <int W, int H> void draw_triangle(FrameBuffer<W, H> &fb, Triangle T) {
   auto [A, B, C, color] = T;
   int min_x = std::clamp(std::min({A.x, B.x, C.x}), 0, W - 1);
@@ -22,7 +25,7 @@ template <int W, int H> void draw_triangle(FrameBuffer<W, H> &fb, Triangle T) {
     std::memcpy(line, &fb.data[y * W], W * sizeof(Pixel));
     for (int x = min_x; x <= max_x; ++x) {
 #ifdef __SYNTHESIS__
-#pragma HLS loop_tripcount min = 1 max = 1920
+#pragma HLS loop_tripcount min = 1 max = 1280
 #pragma HLS pipeline II = 1
 #endif
       if (is_inside_triangle(T, {x, y})) {
