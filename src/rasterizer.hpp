@@ -18,21 +18,30 @@ template <int W, int H> void draw_triangle(FrameBuffer<W, H> &fb, Triangle T) {
   for (int y = min_y; y <= max_y; ++y) {
     Pixel line[W];
 
-// TODO: span-only burst across [min_x, max_x]
+    // TODO: span-only burst across [min_x, max_x]
+    for (int i = 0; i < W; ++i) {
 #ifdef __SYNTHESIS__
-#pragma HLS DEPENDENCE variable = fb.data inter false
+#pragma HLS pipeline II = 1
 #endif
-    std::memcpy(line, &fb.data[y * W], W * sizeof(Pixel));
+      line[i] = fb.data[y * W + i];
+    }
+
     for (int x = min_x; x <= max_x; ++x) {
 #ifdef __SYNTHESIS__
-#pragma HLS loop_tripcount min = 1 max = 1280
+#pragma HLS loop_tripcount min = 1 max = FB_W
 #pragma HLS pipeline II = 1
 #endif
       if (is_inside_triangle(T, {x, y})) {
         line[x] = color;
       }
     }
-    std::memcpy(&fb.data[y * W], line, W * sizeof(Pixel));
+
+    for (int i = 0; i < W; ++i) {
+#ifdef __SYNTHESIS__
+#pragma HLS pipeline II = 1
+#endif
+      fb.data[y * W + i] = line[i];
+    }
   }
 }
 

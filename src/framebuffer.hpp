@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cassert>
-#include <cstring>
 
 #include "pixel.hpp"
 
@@ -24,16 +23,13 @@ template <int W, int H> struct FrameBuffer {
   }
 
   void clear(Pixel p = {}) {
-    Pixel line[W];
-    for (int i = 0; i < W; ++i) {
+    for (int j = 0; j < H; ++j) {
+      for (int i = 0; i < W; ++i) {
 #ifdef __SYNTHESIS__
 #pragma HLS pipeline II = 1
 #endif
-      line[i] = p;
-    }
-
-    for (int j = 0; j < H; ++j) {
-      std::memcpy(&data[j * W], line, W * sizeof(Pixel)); // burst write
+        data[j * W + i] = p;
+      }
     }
   }
 };
