@@ -4,9 +4,11 @@
 
 #include "framebuffer.hpp"
 #include "geometry.hpp"
+#include "hls_stream.h"
 
 constexpr int FB_W = 1280;
 constexpr int FB_H = 720;
+constexpr int BURST_BITS = 128;
 
 template <int W, int H> void draw_triangle(FrameBuffer<W, H> &fb, Triangle T) {
   auto [A, B, C, color] = T;
