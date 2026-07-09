@@ -3,14 +3,15 @@
 #include "pixel.hpp"
 
 template <int W, int H>
-void scanout(Pixel *fb_mem, hls::stream<bool> &ready,
-             hls::stream<bool> &freed) {
+void scanout(Pixel *fb_mem, hls::stream<bool> &ready, hls::stream<bool> &freed,
+             hls::stream<video_packet_t> &video_out) {
 #ifdef __SYNTHESIS__
 #pragma HLS INTERFACE m_axi port = fb_mem offset = slave bundle =              \
     gmem1 max_widen_bitwidth = 128 max_write_burst_length =                    \
         256 max_read_burst_length = 256 num_read_outstanding = 4
 #pragma HLS interface axis port = ready
 #pragma HLS interface axis port = freed
+#pragma HLS interface axis port = video_out
 #pragma HLS INTERFACE ap_ctrl_none port = return
 #endif
 
@@ -25,11 +26,6 @@ void scanout(Pixel *fb_mem, hls::stream<bool> &ready,
 
     Pixel *buff = fb_mem + curr * (W * H);
     FrameBuffer<W, H> fb{buff};
-    for (int i = 0; i < H; ++i) {
-#ifdef __SYNTHESIS__
-#pragma HLS pipeline II = 1
-#endif
-      read_line<W, H>(fb, i);
-    }
+    read_lines<W, H>(fb, video_out);
   }
 }
