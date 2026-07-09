@@ -28,9 +28,9 @@ int main() {
   fails += !is_rgb(at(0, 0), 0, 0, 0);
 
   if (fails) {
-    std::printf("cosim_tb FAIL: %d/4 checks failed\n", fails);
+    std::printf("render_tb FAIL: %d/4 checks failed\n", fails);
     return 1;
   }
-  std::printf("cosim_tb PASS\n");
+  std::printf("render_tb PASS\n");
   return 0;
 }
