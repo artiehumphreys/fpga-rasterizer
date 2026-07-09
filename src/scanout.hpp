@@ -16,6 +16,8 @@ void read_line(FrameBuffer<W, H> &fb, int y,
     video_packet_t p;
     p.data = pixel;
 
+    p.keep = -1;
+    p.strb = -1;                 // each bit is valid
     p.user = (y == 0 && x == 0); // SOF
     p.last = (x == W - 1);       // EOL
     video_out.write(p);
