@@ -54,4 +54,5 @@ void draw_triangles(FrameBuffer<W, H> &fb, const Triangle *tris, int n) {
   }
 }
 
-void rasterizer(Pixel *fb_mem);
+void rasterizer(Pixel *fb_mem, hls::stream<bool> &ready,
+                hls::stream<bool> &freed);

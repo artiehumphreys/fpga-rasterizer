@@ -30,3 +30,7 @@ void read_lines(FrameBuffer<W, H> &fb, hls::stream<video_packet_t> &video_out) {
     read_line(fb, y, video_out);
   }
 }
+
+template <int W, int H>
+void scanout(Pixel *fb_mem, hls::stream<bool> &ready, hls::stream<bool> &freed,
+             hls::stream<video_packet_t> &video_out);
