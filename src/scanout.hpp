@@ -12,7 +12,7 @@ void read_line(FrameBuffer<W, H> &fb, int y,
 #ifdef __SYNTHESIS__
 #pragma HLS pipeline II = 1
 #endif
-    Pixel *pixel = fb.data[fb.get_pixel_addr(x, y)];
+    Pixel pixel = fb.data[fb.get_pixel_addr(x, y)];
     video_packet_t p;
     p.data = pixel;
 
