@@ -1,8 +1,8 @@
 #include "scanout.hpp"
 #include "hls_stream.h"
 #include "pixel.hpp"
+#include "rasterizer.hpp"
 
-template <int W, int H>
 void scanout(Pixel *fb_mem, hls::stream<bool> &ready, hls::stream<bool> &freed,
              hls::stream<video_packet_t> &video_out) {
 #ifdef __SYNTHESIS__
@@ -24,8 +24,8 @@ void scanout(Pixel *fb_mem, hls::stream<bool> &ready, hls::stream<bool> &freed,
       curr = next;
     }
 
-    Pixel *buff = fb_mem + curr * (W * H);
-    FrameBuffer<W, H> fb{buff};
-    read_lines<W, H>(fb, video_out);
+    Pixel *buff = fb_mem + curr * (FB_W * FB_H);
+    FrameBuffer<FB_W, FB_H> fb{buff};
+    read_lines<FB_W, FB_H>(fb, video_out);
   }
 }
