@@ -6,6 +6,7 @@
 # 50 MHz board oscillator
 set_property -dict {PACKAGE_PIN M21 IOSTANDARD LVCMOS33} [get_ports sys_clk]
 create_clock -name sys_clk -period 20.000 [get_ports sys_clk]
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_ports sys_clk]]
 
 # Active-low reset push-button
 set_property -dict {PACKAGE_PIN H7 IOSTANDARD LVCMOS33} [get_ports sys_rst_n]
