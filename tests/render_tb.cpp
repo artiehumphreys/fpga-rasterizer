@@ -2,22 +2,17 @@
 #include <memory>
 
 #include "rasterizer.hpp"
+#include "scene.hpp"
 
 static bool is_rgb(const Pixel &p, int r, int g, int b) {
   return red(p) == r && green(p) == g && blue(p) == b;
 }
 
-static const Triangle scene[] = {
-    {{400, 133}, {133, 133}, {267, 267}, rgba(255, 0, 0, 255)},
-    {{600, 200}, {867, 200}, {733, 467}, rgba(0, 255, 0, 255)},
-    {{200, 400}, {467, 533}, {200, 600}, rgba(0, 0, 255, 255)},
-};
-
 int main() {
   auto buf = std::make_unique<Pixel[]>(FB_W * FB_H);
   FrameBuffer<FB_W, FB_H> fb{buf.get()};
   fb.clear();
-  draw_triangles(fb, scene, sizeof(scene) / sizeof(scene[0]));
+  draw_triangles(fb, scene, scene_count);
 
   auto at = [&](int x, int y) -> const Pixel & { return buf[y * FB_W + x]; };
 

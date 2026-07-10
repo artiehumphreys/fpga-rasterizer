@@ -5,14 +5,14 @@
 
 #include "ppm.hpp"
 #include "rasterizer.hpp"
+#include "scene.hpp"
 
 int main() {
   // heap-allocated: ~3.7 MB, too big for the stack. On hardware this lives in
   // DDR3.
   auto buf = std::make_unique<Pixel[]>(FB_W * FB_H);
-  rasterizer(buf.get());
-
   FrameBuffer<FB_W, FB_H> fb{buf.get()};
+  render_frame(fb, scene, scene_count);
 
   const char *hex = "golden_fb.hex";
   std::FILE *f = std::fopen(hex, "w");
