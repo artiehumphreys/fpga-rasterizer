@@ -27,14 +27,14 @@ sync:
 	rsync -avz --exclude 'build/' ./ $(REMOTE):$(REMOTE_DIR)/
 
 build: sync
-	$(call REMOTE_RUN,v++ -c --mode hls --config scripts/hls_config.cfg --work_dir build/)
+	$(call REMOTE_RUN,v++ -c --mode hls --config scripts/$(CONFIG) --work_dir build/$(CONFIG))
 
 csim: sync
-	$(call REMOTE_RUN,vitis-run --mode hls --csim --config scripts/hls_config.cfg --work_dir build/)
+	$(call REMOTE_RUN,vitis-run --mode hls --csim --config scripts/$(CONFIG) --work_dir build/$(CONFIG))
 
 # C/RTL co-simulation: verifies generated RTL matches the C model.
 cosim: build
-	$(call REMOTE_RUN,vitis-run --mode hls --cosim --config scripts/hls_config.cfg --work_dir build/)
+	$(call REMOTE_RUN,vitis-run --mode hls --cosim --config scripts/$(CONFIG) --work_dir build/$(CONFIG))
 
 bd: sync
 	$(call REMOTE_RUN,vivado -mode batch -source scripts/bd.tcl)

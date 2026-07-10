@@ -1,5 +1,5 @@
-# System: 50MHz osc -> clk_wiz -> MIG (DDR3). JTAG-to-AXI + rasterizer kernel
-# share an AXI SmartConnect crossbar reaching DDR3 and the kernel's control regs.
+# System: 50MHz osc -> clk_wiz -> MIG (DDR3). JTAG-to-AXI + rasterizer + scanout
+# kernels share an AXI SmartConnect crossbar reaching DDR3.
 
 set part xc7a100t-fgg676-1
 set proj_dir build_vivado
@@ -9,7 +9,8 @@ set bd_name system
 file delete -force $proj_dir
 create_project $proj_name $proj_dir -part $part
 
-set_property ip_repo_paths build/hls/impl/ip [current_project]
+# scan build/ recursively so both kernels' exported IP are found
+set_property ip_repo_paths build [current_project]
 update_ip_catalog
 
 create_bd_design $bd_name
@@ -30,18 +31,23 @@ set_property -dict {
 create_bd_cell -type ip -vlnv xilinx.com:ip:jtag_axi jtag_axi_0
 
 create_bd_cell -type ip -vlnv xilinx.com:hls:rasterizer rasterizer_0
+create_bd_cell -type ip -vlnv xilinx.com:hls:scanout scanout_0
 
 create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect smartconnect_0
 create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset proc_sys_reset_0
 
-# AXI data paths through the crossbar
-set_property -dict {CONFIG.NUM_SI {2} CONFIG.NUM_MI {2}} [get_bd_cells smartconnect_0]
-# two masters IN: JTAG (control + readback), kernel (framebuffer writes)
+# Both kernels are ap_ctrl_none (free-running) -> NO s_axi_control ports.
+# three masters IN: JTAG (DDR3 readback), rasterizer (fb writes), scanout (fb reads)
+# one slave OUT: DDR3
+set_property -dict {CONFIG.NUM_SI {3} CONFIG.NUM_MI {1}} [get_bd_cells smartconnect_0]
 connect_bd_intf_net [get_bd_intf_pins jtag_axi_0/M_AXI]         [get_bd_intf_pins smartconnect_0/S00_AXI]
 connect_bd_intf_net [get_bd_intf_pins rasterizer_0/m_axi_gmem0] [get_bd_intf_pins smartconnect_0/S01_AXI]
-# two slaves OUT: DDR3, kernel control registers
+connect_bd_intf_net [get_bd_intf_pins scanout_0/m_axi_gmem1]    [get_bd_intf_pins smartconnect_0/S02_AXI]
 connect_bd_intf_net [get_bd_intf_pins smartconnect_0/M00_AXI]   [get_bd_intf_pins mig_7series_0/S_AXI]
-connect_bd_intf_net [get_bd_intf_pins smartconnect_0/M01_AXI]   [get_bd_intf_pins rasterizer_0/s_axi_control]
+
+# double-buffer handshake
+connect_bd_intf_net [get_bd_intf_pins rasterizer_0/ready] [get_bd_intf_pins scanout_0/ready]
+connect_bd_intf_net [get_bd_intf_pins scanout_0/freed]    [get_bd_intf_pins rasterizer_0/freed]
 
 connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] [get_bd_pins mig_7series_0/sys_clk_i]
 connect_bd_net [get_bd_pins clk_wiz_0/clk_out2] [get_bd_pins mig_7series_0/clk_ref_i]
@@ -50,6 +56,7 @@ set uiclk [get_bd_pins mig_7series_0/ui_clk]
 connect_bd_net $uiclk [get_bd_pins smartconnect_0/aclk]
 connect_bd_net $uiclk [get_bd_pins jtag_axi_0/aclk]
 connect_bd_net $uiclk [get_bd_pins rasterizer_0/ap_clk]
+connect_bd_net $uiclk [get_bd_pins scanout_0/ap_clk]
 connect_bd_net $uiclk [get_bd_pins proc_sys_reset_0/slowest_sync_clk]
 
 connect_bd_net [get_bd_pins mig_7series_0/mmcm_locked] [get_bd_pins proc_sys_reset_0/dcm_locked]
@@ -57,6 +64,7 @@ set arstn [get_bd_pins proc_sys_reset_0/peripheral_aresetn]
 connect_bd_net $arstn [get_bd_pins smartconnect_0/aresetn]
 connect_bd_net $arstn [get_bd_pins jtag_axi_0/aresetn]
 connect_bd_net $arstn [get_bd_pins rasterizer_0/ap_rst_n]
+connect_bd_net $arstn [get_bd_pins scanout_0/ap_rst_n]
 connect_bd_net $arstn [get_bd_pins mig_7series_0/aresetn]
 
 # ILA: passive monitor on the kernel's external reads/writes
@@ -72,6 +80,10 @@ connect_bd_net $uiclk [get_bd_pins system_ila_0/clk]
 connect_bd_net $arstn [get_bd_pins system_ila_0/resetn]
 
 make_bd_intf_pins_external [get_bd_intf_pins mig_7series_0/DDR3]
+
+# expose the scanout pixel stream
+# TODO: build the hdmi out chain.
+make_bd_intf_pins_external [get_bd_intf_pins scanout_0/video_out]
 
 create_bd_port -dir I -type clk -freq_hz 50000000 sys_clk
 connect_bd_net [get_bd_ports sys_clk] [get_bd_pins clk_wiz_0/clk_in1]
