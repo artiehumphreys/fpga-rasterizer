@@ -6,7 +6,7 @@ template <int W, int H>
 void scanout(Pixel *fb_mem, hls::stream<bool> &ready, hls::stream<bool> &freed,
              hls::stream<video_packet_t> &video_out) {
 #ifdef __SYNTHESIS__
-#pragma HLS INTERFACE m_axi port = fb_mem offset = slave bundle =              \
+#pragma HLS INTERFACE m_axi port = fb_mem offset = off bundle =                \
     gmem1 max_widen_bitwidth = 128 max_write_burst_length =                    \
         256 max_read_burst_length = 256 num_read_outstanding = 4
 #pragma HLS interface axis port = ready

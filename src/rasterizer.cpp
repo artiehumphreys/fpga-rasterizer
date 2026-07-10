@@ -10,7 +10,7 @@ static const Triangle scene[] = {
 void rasterizer(Pixel *fb_mem, hls::stream<bool> &ready,
                 hls::stream<bool> &freed) {
 #ifdef __SYNTHESIS__
-#pragma HLS INTERFACE m_axi port = fb_mem offset = slave bundle =              \
+#pragma HLS INTERFACE m_axi port = fb_mem offset = off bundle =                \
     gmem0 max_widen_bitwidth = 128 max_write_burst_length =                    \
         256 max_read_burst_length = 256 num_write_outstanding = 8
 #pragma HLS interface axis port = ready
