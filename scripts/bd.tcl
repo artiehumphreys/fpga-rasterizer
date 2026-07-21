@@ -20,6 +20,24 @@ update_compile_order -fileset sources_1
 
 source scripts/bd_vivado.tcl
 
+# ensure 720p
+set_property -dict [list \
+  CONFIG.enable_generation {true} \
+  CONFIG.GEN_VIDEO_FORMAT {RGB} \
+  CONFIG.GEN_HACTIVE_SIZE {1280} \
+  CONFIG.GEN_HFRAME_SIZE {1650} \
+  CONFIG.GEN_HSYNC_START {1390} \
+  CONFIG.GEN_HSYNC_END {1430} \
+  CONFIG.GEN_HSYNC_POLARITY {High} \
+  CONFIG.GEN_VACTIVE_SIZE {720} \
+  CONFIG.GEN_F0_VFRAME_SIZE {750} \
+  CONFIG.GEN_F0_VSYNC_VSTART {724} \
+  CONFIG.GEN_F0_VSYNC_VEND {729} \
+  CONFIG.GEN_VSYNC_POLARITY {High} \
+] [get_bd_cells v_tc_0]
+validate_bd_design
+save_bd_design
+
 make_wrapper -files [get_files $proj_dir/$proj_name.srcs/sources_1/bd/$bd_name/$bd_name.bd] -top
 add_files -norecurse $proj_dir/$proj_name.gen/sources_1/bd/$bd_name/hdl/${bd_name}_wrapper.v
 add_files -fileset constrs_1 constraints/wukong_top.xdc
