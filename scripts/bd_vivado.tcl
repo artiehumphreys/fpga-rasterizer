@@ -136,6 +136,7 @@ xilinx.com:hls:rasterizer:1.0\
 xilinx.com:hls:scanout:1.0\
 xilinx.com:ip:smartconnect:1.0\
 xilinx.com:ip:proc_sys_reset:5.0\
+xilinx.com:ip:axis_data_fifo:2.0\
 "
 
    set list_ips_missing ""
@@ -352,9 +353,6 @@ proc create_root_design { parentCell } {
   # Create interface ports
   set DDR3_0 [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:ddrx_rtl:1.0 DDR3_0 ]
 
-  # TODO: scanout/video_out left unconnected for now. When the HDMI chain
-  # (async FIFO -> Video Out -> VTC -> serializers) is built, wire video_out
-  # into it instead of exposing it as a raw external port 
 
   # Create ports
   set sys_clk [ create_bd_port -dir I -type clk -freq_hz 50000000 sys_clk ]
@@ -372,8 +370,8 @@ proc create_root_design { parentCell } {
   set_property CONFIG.XML_INPUT_FILE {mig.prj} $mig_7series_0
 
 
-  # Create instance: clk_wiz_0, and set properties
-  set clk_wiz_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_0 ]
+  # Create instance: clk_wiz_rasterizer, and set properties
+  set clk_wiz_rasterizer [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_rasterizer ]
   set_property -dict [list \
     CONFIG.CLKIN1_JITTER_PS {200.0} \
     CONFIG.CLKIN2_JITTER_PS {100.0} \
@@ -395,7 +393,7 @@ proc create_root_design { parentCell } {
     CONFIG.RESET_TYPE {ACTIVE_LOW} \
     CONFIG.SECONDARY_SOURCE {Single_ended_clock_capable_pin} \
     CONFIG.USE_INCLK_SWITCHOVER {false} \
-  ] $clk_wiz_0
+  ] $clk_wiz_rasterizer
 
 
   # Create instance: jtag_axi_0, and set properties
@@ -415,11 +413,41 @@ proc create_root_design { parentCell } {
   ] $smartconnect_0
 
 
-  # Create instance: rst_mig_7series_0_83M, and set properties
-  set rst_mig_7series_0_83M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_mig_7series_0_83M ]
+  # Create instance: mig_7series_rst_83M, and set properties
+  set mig_7series_rst_83M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 mig_7series_rst_83M ]
 
-  # Create instance: rst_clk_wiz_0_166M, and set properties
-  set rst_clk_wiz_0_166M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_clk_wiz_0_166M ]
+  # Create instance: rasterizer_rst_166M, and set properties
+  set rasterizer_rst_166M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rasterizer_rst_166M ]
+
+  # Create instance: clk_wiz_pixel, and set properties
+  set clk_wiz_pixel [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_pixel ]
+  set_property -dict [list \
+    CONFIG.CLKOUT1_JITTER {155.608} \
+    CONFIG.CLKOUT1_PHASE_ERROR {158.235} \
+    CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {75} \
+    CONFIG.CLKOUT2_JITTER {117.790} \
+    CONFIG.CLKOUT2_PHASE_ERROR {158.235} \
+    CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {375} \
+    CONFIG.CLKOUT2_USED {true} \
+    CONFIG.MMCM_CLKFBOUT_MULT_F {22.500} \
+    CONFIG.MMCM_CLKOUT0_DIVIDE_F {15.000} \
+    CONFIG.MMCM_CLKOUT1_DIVIDE {3} \
+    CONFIG.NUM_OUT_CLKS {2} \
+    CONFIG.RESET_PORT {resetn} \
+    CONFIG.RESET_TYPE {ACTIVE_LOW} \
+  ] $clk_wiz_pixel
+
+
+  # Create instance: pixel_rst_75M, and set properties
+  set pixel_rst_75M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 pixel_rst_75M ]
+
+  # Create instance: video_cdc_fifo, and set properties
+  set video_cdc_fifo [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_data_fifo:2.0 video_cdc_fifo ]
+  set_property -dict [list \
+    CONFIG.FIFO_DEPTH {2048} \
+    CONFIG.IS_ACLK_ASYNC {1} \
+  ] $video_cdc_fifo
+
 
   # Create interface connections
   connect_bd_intf_net -intf_net jtag_axi_0_M_AXI [get_bd_intf_pins jtag_axi_0/M_AXI] [get_bd_intf_pins smartconnect_0/S00_AXI]
@@ -428,44 +456,53 @@ proc create_root_design { parentCell } {
   connect_bd_intf_net -intf_net rasterizer_0_ready_r [get_bd_intf_pins rasterizer_0/ready_r] [get_bd_intf_pins scanout_0/ready_r]
   connect_bd_intf_net -intf_net scanout_0_freed [get_bd_intf_pins scanout_0/freed] [get_bd_intf_pins rasterizer_0/freed]
   connect_bd_intf_net -intf_net scanout_0_m_axi_gmem1 [get_bd_intf_pins scanout_0/m_axi_gmem1] [get_bd_intf_pins smartconnect_0/S02_AXI]
+  connect_bd_intf_net -intf_net scanout_0_video_out [get_bd_intf_pins scanout_0/video_out] [get_bd_intf_pins video_cdc_fifo/S_AXIS]
   connect_bd_intf_net -intf_net smartconnect_0_M00_AXI [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins mig_7series_0/S_AXI]
 
   # Create port connections
-  connect_bd_net -net clk_wiz_0_clk_out1  [get_bd_pins clk_wiz_0/clk_out1] \
+  connect_bd_net -net clk_wiz_0_clk_out1  [get_bd_pins clk_wiz_rasterizer/clk_out1] \
   [get_bd_pins mig_7series_0/sys_clk_i] \
   [get_bd_pins jtag_axi_0/aclk] \
   [get_bd_pins smartconnect_0/aclk] \
-  [get_bd_pins rst_clk_wiz_0_166M/slowest_sync_clk] \
+  [get_bd_pins rasterizer_rst_166M/slowest_sync_clk] \
   [get_bd_pins rasterizer_0/ap_clk] \
-  [get_bd_pins scanout_0/ap_clk]
-  connect_bd_net -net clk_wiz_0_clk_out2  [get_bd_pins clk_wiz_0/clk_out2] \
+  [get_bd_pins scanout_0/ap_clk] \
+  [get_bd_pins video_cdc_fifo/s_axis_aclk]
+  connect_bd_net -net clk_wiz_0_clk_out2  [get_bd_pins clk_wiz_rasterizer/clk_out2] \
   [get_bd_pins mig_7series_0/clk_ref_i]
-  connect_bd_net -net clk_wiz_0_locked  [get_bd_pins clk_wiz_0/locked] \
-  [get_bd_pins rst_clk_wiz_0_166M/dcm_locked]
+  connect_bd_net -net clk_wiz_0_locked  [get_bd_pins clk_wiz_rasterizer/locked] \
+  [get_bd_pins rasterizer_rst_166M/dcm_locked]
+  connect_bd_net -net clk_wiz_1_clk_out1  [get_bd_pins clk_wiz_pixel/clk_out1] \
+  [get_bd_pins pixel_rst_75M/slowest_sync_clk] \
+  [get_bd_pins video_cdc_fifo/m_axis_aclk]
+  connect_bd_net -net clk_wiz_1_locked  [get_bd_pins clk_wiz_pixel/locked] \
+  [get_bd_pins pixel_rst_75M/dcm_locked]
   connect_bd_net -net mig_7series_0_mmcm_locked  [get_bd_pins mig_7series_0/mmcm_locked] \
-  [get_bd_pins rst_mig_7series_0_83M/dcm_locked]
+  [get_bd_pins mig_7series_rst_83M/dcm_locked]
   connect_bd_net -net mig_7series_0_ui_clk  [get_bd_pins mig_7series_0/ui_clk] \
   [get_bd_pins smartconnect_0/aclk1] \
-  [get_bd_pins rst_mig_7series_0_83M/slowest_sync_clk]
-  connect_bd_net -net rst_clk_wiz_0_166M_peripheral_aresetn  [get_bd_pins rst_clk_wiz_0_166M/peripheral_aresetn] \
+  [get_bd_pins mig_7series_rst_83M/slowest_sync_clk]
+  connect_bd_net -net rst_clk_wiz_0_166M_peripheral_aresetn  [get_bd_pins rasterizer_rst_166M/peripheral_aresetn] \
   [get_bd_pins jtag_axi_0/aresetn] \
   [get_bd_pins rasterizer_0/ap_rst_n] \
-  [get_bd_pins scanout_0/ap_rst_n]
-  connect_bd_net -net rst_mig_7series_0_83M_peripheral_aresetn  [get_bd_pins rst_mig_7series_0_83M/peripheral_aresetn] \
+  [get_bd_pins scanout_0/ap_rst_n] \
+  [get_bd_pins video_cdc_fifo/s_axis_aresetn]
+  connect_bd_net -net rst_mig_7series_0_83M_peripheral_aresetn  [get_bd_pins mig_7series_rst_83M/peripheral_aresetn] \
   [get_bd_pins mig_7series_0/aresetn] \
   [get_bd_pins smartconnect_0/aresetn]
   connect_bd_net -net sys_clk_1  [get_bd_ports sys_clk] \
-  [get_bd_pins clk_wiz_0/clk_in1]
+  [get_bd_pins clk_wiz_rasterizer/clk_in1] \
+  [get_bd_pins clk_wiz_pixel/clk_in1]
   connect_bd_net -net sys_rst_n_1  [get_bd_ports sys_rst_n] \
   [get_bd_pins mig_7series_0/sys_rst] \
-  [get_bd_pins rst_clk_wiz_0_166M/ext_reset_in] \
-  [get_bd_pins rst_mig_7series_0_83M/ext_reset_in] \
-  [get_bd_pins clk_wiz_0/resetn]
+  [get_bd_pins rasterizer_rst_166M/ext_reset_in] \
+  [get_bd_pins mig_7series_rst_83M/ext_reset_in] \
+  [get_bd_pins clk_wiz_rasterizer/resetn] \
+  [get_bd_pins clk_wiz_pixel/resetn] \
+  [get_bd_pins pixel_rst_75M/ext_reset_in]
 
   # Create address segments
   assign_bd_address -offset 0x80000000 -range 0x10000000 -target_address_space [get_bd_addr_spaces jtag_axi_0/Data] [get_bd_addr_segs mig_7series_0/memmap/memaddr] -force
-  # kernels use offset=off (0-based AXI addresses); map DDR3 at 0x0 so their writes
-  # decode to MIG. JTAG keeps 0x80000000 -> same physical cells (MIG decodes low 28 bits).
   assign_bd_address -offset 0x00000000 -range 0x10000000 -target_address_space [get_bd_addr_spaces rasterizer_0/Data_m_axi_gmem0] [get_bd_addr_segs mig_7series_0/memmap/memaddr] -force
   assign_bd_address -offset 0x00000000 -range 0x10000000 -target_address_space [get_bd_addr_spaces scanout_0/Data_m_axi_gmem1] [get_bd_addr_segs mig_7series_0/memmap/memaddr] -force
 
