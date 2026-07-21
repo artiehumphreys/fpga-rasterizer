@@ -1,5 +1,10 @@
 open_project build_vivado/rasterizer_fpga.xpr
 
+set_property source_mgmt_mode All [current_project]
+# Pin the real top in this session, right before launch
+update_compile_order -fileset sources_1
+set_property top system_wrapper [current_fileset]
+
 launch_runs synth_1 -jobs 4
 wait_on_run synth_1
 

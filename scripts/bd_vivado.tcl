@@ -43,6 +43,13 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 # To test this script, run the following commands from Vivado Tcl console:
 # source system_script.tcl
 
+
+# The design that will be created by this Tcl script contains the following 
+# module references:
+# tmds_out
+
+# Please add the sources of those modules before sourcing this Tcl script.
+
 # If there is no project opened, this script will create a
 # project, but make sure you do not have an existing project
 # <./myproj/project_1.xpr> in the current working folder.
@@ -137,6 +144,9 @@ xilinx.com:hls:scanout:1.0\
 xilinx.com:ip:smartconnect:1.0\
 xilinx.com:ip:proc_sys_reset:5.0\
 xilinx.com:ip:axis_data_fifo:2.0\
+xilinx.com:ip:v_tc:6.2\
+xilinx.com:ip:v_axi4s_vid_out:4.0\
+xilinx.com:ip:axis_subset_converter:1.1\
 "
 
    set list_ips_missing ""
@@ -154,6 +164,31 @@ xilinx.com:ip:axis_data_fifo:2.0\
       set bCheckIPsPassed 0
    }
 
+}
+
+##################################################################
+# CHECK Modules
+##################################################################
+set bCheckModules 1
+if { $bCheckModules == 1 } {
+   set list_check_mods "\ 
+tmds_out\
+"
+
+   set list_mods_missing ""
+   common::send_gid_msg -ssname BD::TCL -id 2020 -severity "INFO" "Checking if the following modules exist in the project's sources: $list_check_mods ."
+
+   foreach mod_vlnv $list_check_mods {
+      if { [can_resolve_reference $mod_vlnv] == 0 } {
+         lappend list_mods_missing $mod_vlnv
+      }
+   }
+
+   if { $list_mods_missing ne "" } {
+      catch {common::send_gid_msg -ssname BD::TCL -id 2021 -severity "ERROR" "The following module(s) are not found in the project: $list_mods_missing" }
+      common::send_gid_msg -ssname BD::TCL -id 2022 -severity "INFO" "Please add source files for the missing module(s) above."
+      set bCheckIPsPassed 0
+   }
 }
 
 if { $bCheckIPsPassed != 1 } {
@@ -357,6 +392,10 @@ proc create_root_design { parentCell } {
   # Create ports
   set sys_clk [ create_bd_port -dir I -type clk -freq_hz 50000000 sys_clk ]
   set sys_rst_n [ create_bd_port -dir I -type rst sys_rst_n ]
+  set HDMI_CLK [ create_bd_port -dir O -type clk HDMI_CLK ]
+  set HDMI_CLK_N [ create_bd_port -dir O -type clk HDMI_CLK_N ]
+  set HDMI_TX [ create_bd_port -dir O -from 2 -to 0 HDMI_TX ]
+  set HDMI_TX_N [ create_bd_port -dir O -from 2 -to 0 HDMI_TX_N ]
 
   # Create instance: mig_7series_0, and set properties
   set mig_7series_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:mig_7series:4.2 mig_7series_0 ]
@@ -422,17 +461,20 @@ proc create_root_design { parentCell } {
   # Create instance: clk_wiz_pixel, and set properties
   set clk_wiz_pixel [ create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clk_wiz_pixel ]
   set_property -dict [list \
-    CONFIG.CLKOUT1_JITTER {155.608} \
-    CONFIG.CLKOUT1_PHASE_ERROR {158.235} \
+    CONFIG.CLKIN1_JITTER_PS {50.0} \
+    CONFIG.CLKOUT1_JITTER {113.384} \
+    CONFIG.CLKOUT1_PHASE_ERROR {83.901} \
     CONFIG.CLKOUT1_REQUESTED_OUT_FREQ {75} \
-    CONFIG.CLKOUT2_JITTER {117.790} \
-    CONFIG.CLKOUT2_PHASE_ERROR {158.235} \
+    CONFIG.CLKOUT2_JITTER {82.875} \
+    CONFIG.CLKOUT2_PHASE_ERROR {83.901} \
     CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {375} \
     CONFIG.CLKOUT2_USED {true} \
-    CONFIG.MMCM_CLKFBOUT_MULT_F {22.500} \
+    CONFIG.MMCM_CLKFBOUT_MULT_F {5.625} \
+    CONFIG.MMCM_CLKIN1_PERIOD {5.000} \
     CONFIG.MMCM_CLKOUT0_DIVIDE_F {15.000} \
     CONFIG.MMCM_CLKOUT1_DIVIDE {3} \
     CONFIG.NUM_OUT_CLKS {2} \
+    CONFIG.PRIM_IN_FREQ {200.0000} \
     CONFIG.RESET_PORT {resetn} \
     CONFIG.RESET_TYPE {ACTIVE_LOW} \
   ] $clk_wiz_pixel
@@ -449,7 +491,71 @@ proc create_root_design { parentCell } {
   ] $video_cdc_fifo
 
 
+  # Create instance: v_tc_0, and set properties
+  set v_tc_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:v_tc:6.2 v_tc_0 ]
+  set_property -dict [list \
+    CONFIG.HAS_AXI4_LITE {false} \
+    CONFIG.enable_detection {false} \
+  ] $v_tc_0
+
+
+  # Create instance: v_axi4s_vid_out_0, and set properties
+  set v_axi4s_vid_out_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:v_axi4s_vid_out:4.0 v_axi4s_vid_out_0 ]
+  set_property CONFIG.C_HAS_ASYNC_CLK {1} $v_axi4s_vid_out_0
+
+
+  # Create instance: tmds_out_0, and set properties
+  set block_name tmds_out
+  set block_cell_name tmds_out_0
+  if { [catch {set tmds_out_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $tmds_out_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: axis_subset_converter_0, and set properties
+  set axis_subset_converter_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axis_subset_converter:1.1 axis_subset_converter_0 ]
+  set_property -dict [list \
+    CONFIG.M_HAS_TKEEP {1} \
+    CONFIG.M_HAS_TLAST {1} \
+    CONFIG.M_HAS_TREADY {1} \
+    CONFIG.M_HAS_TSTRB {1} \
+    CONFIG.M_TDATA_NUM_BYTES {3} \
+    CONFIG.M_TDEST_WIDTH {0} \
+    CONFIG.M_TID_WIDTH {0} \
+    CONFIG.M_TUSER_WIDTH {1} \
+    CONFIG.S_HAS_TKEEP {1} \
+    CONFIG.S_HAS_TLAST {1} \
+    CONFIG.S_HAS_TREADY {1} \
+    CONFIG.S_HAS_TSTRB {1} \
+    CONFIG.S_TDATA_NUM_BYTES {4} \
+    CONFIG.S_TDEST_WIDTH {0} \
+    CONFIG.S_TID_WIDTH {0} \
+    CONFIG.S_TUSER_WIDTH {1} \
+  ] $axis_subset_converter_0
+
+  set_property -dict [list \
+    CONFIG.M_HAS_TKEEP.VALUE_MODE {auto} \
+    CONFIG.M_HAS_TLAST.VALUE_MODE {auto} \
+    CONFIG.M_HAS_TREADY.VALUE_MODE {auto} \
+    CONFIG.M_HAS_TSTRB.VALUE_MODE {auto} \
+    CONFIG.M_TDEST_WIDTH.VALUE_MODE {auto} \
+    CONFIG.M_TID_WIDTH.VALUE_MODE {auto} \
+    CONFIG.M_TUSER_WIDTH.VALUE_MODE {auto} \
+    CONFIG.S_HAS_TKEEP.VALUE_MODE {auto} \
+    CONFIG.S_HAS_TLAST.VALUE_MODE {auto} \
+    CONFIG.S_HAS_TREADY.VALUE_MODE {auto} \
+    CONFIG.S_HAS_TSTRB.VALUE_MODE {auto} \
+    CONFIG.S_TDEST_WIDTH.VALUE_MODE {auto} \
+    CONFIG.S_TID_WIDTH.VALUE_MODE {auto} \
+    CONFIG.S_TUSER_WIDTH.VALUE_MODE {auto} \
+  ] $axis_subset_converter_0
+
+
   # Create interface connections
+  connect_bd_intf_net -intf_net axis_subset_converter_0_M_AXIS [get_bd_intf_pins axis_subset_converter_0/M_AXIS] [get_bd_intf_pins v_axi4s_vid_out_0/video_in]
   connect_bd_intf_net -intf_net jtag_axi_0_M_AXI [get_bd_intf_pins jtag_axi_0/M_AXI] [get_bd_intf_pins smartconnect_0/S00_AXI]
   connect_bd_intf_net -intf_net mig_7series_0_DDR3 [get_bd_intf_ports DDR3_0] [get_bd_intf_pins mig_7series_0/DDR3]
   connect_bd_intf_net -intf_net rasterizer_0_m_axi_gmem0 [get_bd_intf_pins rasterizer_0/m_axi_gmem0] [get_bd_intf_pins smartconnect_0/S01_AXI]
@@ -458,6 +564,8 @@ proc create_root_design { parentCell } {
   connect_bd_intf_net -intf_net scanout_0_m_axi_gmem1 [get_bd_intf_pins scanout_0/m_axi_gmem1] [get_bd_intf_pins smartconnect_0/S02_AXI]
   connect_bd_intf_net -intf_net scanout_0_video_out [get_bd_intf_pins scanout_0/video_out] [get_bd_intf_pins video_cdc_fifo/S_AXIS]
   connect_bd_intf_net -intf_net smartconnect_0_M00_AXI [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins mig_7series_0/S_AXI]
+  connect_bd_intf_net -intf_net v_tc_0_vtiming_out [get_bd_intf_pins v_tc_0/vtiming_out] [get_bd_intf_pins v_axi4s_vid_out_0/vtiming_in]
+  connect_bd_intf_net -intf_net video_cdc_fifo_M_AXIS [get_bd_intf_pins video_cdc_fifo/M_AXIS] [get_bd_intf_pins axis_subset_converter_0/S_AXIS]
 
   # Create port connections
   connect_bd_net -net clk_wiz_0_clk_out1  [get_bd_pins clk_wiz_rasterizer/clk_out1] \
@@ -465,41 +573,71 @@ proc create_root_design { parentCell } {
   [get_bd_pins jtag_axi_0/aclk] \
   [get_bd_pins smartconnect_0/aclk] \
   [get_bd_pins rasterizer_rst_166M/slowest_sync_clk] \
+  [get_bd_pins video_cdc_fifo/s_axis_aclk] \
   [get_bd_pins rasterizer_0/ap_clk] \
-  [get_bd_pins scanout_0/ap_clk] \
-  [get_bd_pins video_cdc_fifo/s_axis_aclk]
+  [get_bd_pins scanout_0/ap_clk]
   connect_bd_net -net clk_wiz_0_clk_out2  [get_bd_pins clk_wiz_rasterizer/clk_out2] \
-  [get_bd_pins mig_7series_0/clk_ref_i]
+  [get_bd_pins mig_7series_0/clk_ref_i] \
+  [get_bd_pins clk_wiz_pixel/clk_in1]
   connect_bd_net -net clk_wiz_0_locked  [get_bd_pins clk_wiz_rasterizer/locked] \
   [get_bd_pins rasterizer_rst_166M/dcm_locked]
   connect_bd_net -net clk_wiz_1_clk_out1  [get_bd_pins clk_wiz_pixel/clk_out1] \
   [get_bd_pins pixel_rst_75M/slowest_sync_clk] \
-  [get_bd_pins video_cdc_fifo/m_axis_aclk]
+  [get_bd_pins video_cdc_fifo/m_axis_aclk] \
+  [get_bd_pins v_tc_0/clk] \
+  [get_bd_pins v_axi4s_vid_out_0/aclk] \
+  [get_bd_pins v_axi4s_vid_out_0/vid_io_out_clk] \
+  [get_bd_pins tmds_out_0/pixclk] \
+  [get_bd_pins axis_subset_converter_0/aclk]
   connect_bd_net -net clk_wiz_1_locked  [get_bd_pins clk_wiz_pixel/locked] \
   [get_bd_pins pixel_rst_75M/dcm_locked]
+  connect_bd_net -net clk_wiz_pixel_clk_out2  [get_bd_pins clk_wiz_pixel/clk_out2] \
+  [get_bd_pins tmds_out_0/serclk]
   connect_bd_net -net mig_7series_0_mmcm_locked  [get_bd_pins mig_7series_0/mmcm_locked] \
   [get_bd_pins mig_7series_rst_83M/dcm_locked]
   connect_bd_net -net mig_7series_0_ui_clk  [get_bd_pins mig_7series_0/ui_clk] \
   [get_bd_pins smartconnect_0/aclk1] \
   [get_bd_pins mig_7series_rst_83M/slowest_sync_clk]
+  connect_bd_net -net pixel_rst_75M_peripheral_aresetn  [get_bd_pins pixel_rst_75M/peripheral_aresetn] \
+  [get_bd_pins v_tc_0/resetn] \
+  [get_bd_pins axis_subset_converter_0/aresetn] \
+  [get_bd_pins v_axi4s_vid_out_0/aresetn]
   connect_bd_net -net rst_clk_wiz_0_166M_peripheral_aresetn  [get_bd_pins rasterizer_rst_166M/peripheral_aresetn] \
   [get_bd_pins jtag_axi_0/aresetn] \
+  [get_bd_pins video_cdc_fifo/s_axis_aresetn] \
   [get_bd_pins rasterizer_0/ap_rst_n] \
-  [get_bd_pins scanout_0/ap_rst_n] \
-  [get_bd_pins video_cdc_fifo/s_axis_aresetn]
+  [get_bd_pins scanout_0/ap_rst_n]
   connect_bd_net -net rst_mig_7series_0_83M_peripheral_aresetn  [get_bd_pins mig_7series_rst_83M/peripheral_aresetn] \
   [get_bd_pins mig_7series_0/aresetn] \
   [get_bd_pins smartconnect_0/aresetn]
   connect_bd_net -net sys_clk_1  [get_bd_ports sys_clk] \
-  [get_bd_pins clk_wiz_rasterizer/clk_in1] \
-  [get_bd_pins clk_wiz_pixel/clk_in1]
+  [get_bd_pins clk_wiz_rasterizer/clk_in1]
   connect_bd_net -net sys_rst_n_1  [get_bd_ports sys_rst_n] \
   [get_bd_pins mig_7series_0/sys_rst] \
   [get_bd_pins rasterizer_rst_166M/ext_reset_in] \
   [get_bd_pins mig_7series_rst_83M/ext_reset_in] \
   [get_bd_pins clk_wiz_rasterizer/resetn] \
   [get_bd_pins clk_wiz_pixel/resetn] \
-  [get_bd_pins pixel_rst_75M/ext_reset_in]
+  [get_bd_pins pixel_rst_75M/ext_reset_in] \
+  [get_bd_pins tmds_out_0/sys_rst_n]
+  connect_bd_net -net tmds_out_0_HDMI_CLK  [get_bd_pins tmds_out_0/HDMI_CLK] \
+  [get_bd_ports HDMI_CLK]
+  connect_bd_net -net tmds_out_0_HDMI_CLK_N  [get_bd_pins tmds_out_0/HDMI_CLK_N] \
+  [get_bd_ports HDMI_CLK_N]
+  connect_bd_net -net tmds_out_0_HDMI_TX  [get_bd_pins tmds_out_0/HDMI_TX] \
+  [get_bd_ports HDMI_TX]
+  connect_bd_net -net tmds_out_0_HDMI_TX_N  [get_bd_pins tmds_out_0/HDMI_TX_N] \
+  [get_bd_ports HDMI_TX_N]
+  connect_bd_net -net v_axi4s_vid_out_0_vid_active_video  [get_bd_pins v_axi4s_vid_out_0/vid_active_video] \
+  [get_bd_pins tmds_out_0/vid_active]
+  connect_bd_net -net v_axi4s_vid_out_0_vid_data  [get_bd_pins v_axi4s_vid_out_0/vid_data] \
+  [get_bd_pins tmds_out_0/vid_data]
+  connect_bd_net -net v_axi4s_vid_out_0_vid_hsync  [get_bd_pins v_axi4s_vid_out_0/vid_hsync] \
+  [get_bd_pins tmds_out_0/vid_hsync]
+  connect_bd_net -net v_axi4s_vid_out_0_vid_vsync  [get_bd_pins v_axi4s_vid_out_0/vid_vsync] \
+  [get_bd_pins tmds_out_0/vid_vsync]
+  connect_bd_net -net v_axi4s_vid_out_0_vtg_ce  [get_bd_pins v_axi4s_vid_out_0/vtg_ce] \
+  [get_bd_pins v_tc_0/gen_clken]
 
   # Create address segments
   assign_bd_address -offset 0x80000000 -range 0x10000000 -target_address_space [get_bd_addr_spaces jtag_axi_0/Data] [get_bd_addr_segs mig_7series_0/memmap/memaddr] -force
