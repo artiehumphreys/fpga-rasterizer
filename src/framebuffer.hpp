@@ -16,7 +16,6 @@ template <int W, int H> struct FrameBuffer {
     return x >= 0 && x < W && y >= 0 && y < H;
   }
 
-  // p cheap to copy
   void set_pixel(int x, int y, Pixel p) {
     assert(is_addr_valid(x, y) && "set_pixel: coordinate out of bounds");
     data[get_pixel_addr(x, y)] = p;

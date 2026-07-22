@@ -6,8 +6,6 @@
 
 #include "framebuffer.hpp"
 
-// write the framebuffer as a binary PPM. Alpha is dropped since
-// PPM is RGB.
 template <int W, int H>
 bool write_ppm(const FrameBuffer<W, H> &fb, const std::string &path) {
   std::ofstream out(path, std::ios::binary);

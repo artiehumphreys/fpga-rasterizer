@@ -9,7 +9,7 @@ create_project $proj_name $proj_dir -part $part
 set_property ip_repo_paths {rasterizer_config scanout_config} [current_project]
 update_ip_catalog
 
-# TMDS output RTL (module-referenced by the block design as hdmi_tmds)
+# TMDS output RTL
 add_files -norecurse {
   rtl/tmds_out.vhd
   external/vhdl-hdmi-out/rtl/rgb2tmds.vhd
