@@ -5,6 +5,10 @@
 #include "framebuffer.hpp"
 #include "geometry.hpp"
 
+constexpr int FB_W = 1280;
+constexpr int FB_H = 720;
+constexpr int BURST_BITS = 128;
+
 template <int W, int H> void draw_triangle(FrameBuffer<W, H> &fb, Triangle T) {
   auto [A, B, C, color] = T;
   int min_x = std::clamp(std::min({A.x, B.x, C.x}), 0, W - 1);
@@ -13,15 +17,31 @@ template <int W, int H> void draw_triangle(FrameBuffer<W, H> &fb, Triangle T) {
   int max_y = std::clamp(std::max({A.y, B.y, C.y}), 0, H - 1);
 
   for (int y = min_y; y <= max_y; ++y) {
+    Pixel line[W];
+
+    // TODO: span-only burst across [min_x, max_x]
+    for (int i = 0; i < W; ++i) {
+#ifdef __SYNTHESIS__
+#pragma HLS pipeline II = 1
+#endif
+      line[i] = fb.data[y * W + i];
+    }
+
     for (int x = min_x; x <= max_x; ++x) {
 #ifdef __SYNTHESIS__
-#pragma HLS loop_tripcount min = 1 max = 1920
-// TODO: per-scanline burst writes to reach II=1
-#pragma HLS pipeline II = 2
+#pragma HLS loop_tripcount min = 1 max = FB_W
+#pragma HLS pipeline II = 1
 #endif
       if (is_inside_triangle(T, {x, y})) {
-        fb.set_pixel(x, y, color);
+        line[x] = color;
       }
+    }
+
+    for (int i = 0; i < W; ++i) {
+#ifdef __SYNTHESIS__
+#pragma HLS pipeline II = 1
+#endif
+      fb.data[y * W + i] = line[i];
     }
   }
 }
@@ -33,4 +53,43 @@ void draw_triangles(FrameBuffer<W, H> &fb, const Triangle *tris, int n) {
   }
 }
 
-void rasterizer(Pixel *fb_mem);
+template <int W, int H>
+void render_frame(FrameBuffer<W, H> &fb, const Triangle *tris, int n) {
+  for (int y = 0; y < H; ++y) {
+    Pixel line[W];
+
+    for (int x = 0; x < W; ++x) {
+#ifdef __SYNTHESIS__
+#pragma HLS pipeline II = 1
+#endif
+      line[x] = 0;
+    }
+
+    for (int t = 0; t < n; ++t) {
+      Triangle T = tris[t];
+      auto [A, B, C, color] = T;
+      int min_x = std::clamp(std::min({A.x, B.x, C.x}), 0, W - 1);
+      int max_x = std::clamp(std::max({A.x, B.x, C.x}), 0, W - 1);
+      int min_y = std::clamp(std::min({A.y, B.y, C.y}), 0, H - 1);
+      int max_y = std::clamp(std::max({A.y, B.y, C.y}), 0, H - 1);
+      if (y < min_y || y > max_y)
+        continue;
+
+      for (int x = min_x; x <= max_x; ++x) {
+#ifdef __SYNTHESIS__
+#pragma HLS loop_tripcount min = 1 max = W
+#pragma HLS pipeline II = 1
+#endif
+        if (is_inside_triangle(T, {x, y}))
+          line[x] = color;
+      }
+    }
+
+    for (int x = 0; x < W; ++x) {
+#ifdef __SYNTHESIS__
+#pragma HLS pipeline II = 1
+#endif
+      fb.data[y * W + x] = line[x];
+    }
+  }
+}

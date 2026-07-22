@@ -1,4 +1,5 @@
 # Needs the board powered and the JTAG cable plugged into the workstation.
+# loads .bit file (from make bit) onto FPGA over JTAG
 
 open_hw_manager
 connect_hw_server

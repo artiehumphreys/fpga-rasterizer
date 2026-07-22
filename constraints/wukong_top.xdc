@@ -6,6 +6,17 @@
 # 50 MHz board oscillator
 set_property -dict {PACKAGE_PIN M21 IOSTANDARD LVCMOS33} [get_ports sys_clk]
 create_clock -name sys_clk -period 20.000 [get_ports sys_clk]
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_ports sys_clk]]
 
 # Active-low reset push-button
 set_property -dict {PACKAGE_PIN H7 IOSTANDARD LVCMOS33} [get_ports sys_rst_n]
+
+# HDMI TMDS (official Wukong pins, Bank 35, 3.3 V)
+set_property -dict {PACKAGE_PIN G2 IOSTANDARD TMDS_33} [get_ports {HDMI_TX[2]}]
+set_property -dict {PACKAGE_PIN G1 IOSTANDARD TMDS_33} [get_ports {HDMI_TX_N[2]}]
+set_property -dict {PACKAGE_PIN F2 IOSTANDARD TMDS_33} [get_ports {HDMI_TX[1]}]
+set_property -dict {PACKAGE_PIN E2 IOSTANDARD TMDS_33} [get_ports {HDMI_TX_N[1]}]
+set_property -dict {PACKAGE_PIN E1 IOSTANDARD TMDS_33} [get_ports {HDMI_TX[0]}]
+set_property -dict {PACKAGE_PIN D1 IOSTANDARD TMDS_33} [get_ports {HDMI_TX_N[0]}]
+set_property -dict {PACKAGE_PIN D4 IOSTANDARD TMDS_33} [get_ports {HDMI_CLK}]
+set_property -dict {PACKAGE_PIN C4 IOSTANDARD TMDS_33} [get_ports {HDMI_CLK_N}]
