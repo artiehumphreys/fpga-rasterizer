@@ -1,14 +1,12 @@
 #pragma once
 
-#include "pixel.hpp"
-
 struct Point {
   int x, y;
 };
 
 struct Triangle {
   Point a, b, c;
-  Pixel color;
+  float intensities[3];
 };
 
 struct Bary {
@@ -32,29 +30,27 @@ constexpr void get_sub_areas(const Triangle &T, Point p, SubAreas &areas) {
   areas = {BCP, CAP, ABP};
 }
 
-constexpr void get_barycentric_coordinates(const Triangle &T, Point p,
-                                           Bary &coords) {
-  // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle//barycentric-coordinates.html
-  SubAreas areas;
-  get_sub_areas(T, p, areas);
-
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle//barycentric-coordinates.html
+constexpr Bary to_barycentric(const SubAreas &areas) {
   float ABC = static_cast<float>(areas.bcp) + areas.cap + areas.abp;
   // u -> BCP / ABC, v -> CAP / ABC, w -> ABP / ABC
   float u = areas.bcp / ABC;
   float v = areas.cap / ABC;
   float w = 1 - u - v; // avoid unnecessary division
-
-  coords = {u, v, w};
+  return {u, v, w};
 }
 
-constexpr bool is_inside_triangle(const Triangle &T, Point p) {
+constexpr bool is_inside_triangle(const SubAreas &areas) {
   // NOTE: Instead of depending on CW ordering of points, just check that
   // determinant signs match
-  SubAreas areas;
-  get_sub_areas(T, p, areas);
-
   bool has_neg = (areas.bcp < 0) || (areas.cap < 0) || (areas.abp < 0);
   bool has_pos = (areas.bcp > 0) || (areas.cap > 0) || (areas.abp > 0);
 
   return !(has_neg && has_pos); // mixed signs -> outside
+}
+
+constexpr bool is_inside_triangle(const Triangle &T, Point p) {
+  SubAreas areas;
+  get_sub_areas(T, p, areas);
+  return is_inside_triangle(areas);
 }
