@@ -5,6 +5,8 @@ CXX=c++
 CXXFLAGS=-std=c++23 -Wall -Wextra -O2 -Isrc -Ihost
 HOST_SRC=host/main.cpp
 HOST_BIN=build/rasterizer
+TEST_SRC=tests/host.cpp
+TEST_BIN=build/host_tests
 
 VIVADO_SETTINGS=/tools/Xilinx/2025.2/Vivado/settings64.sh
 VITIS_SETTINGS=/tools/Xilinx/2025.2/Vitis/settings64.sh
@@ -19,6 +21,11 @@ native: $(HOST_SRC)
 
 run: native
 	./$(HOST_BIN)
+
+test: $(TEST_SRC)
+	mkdir -p build
+	$(CXX) $(CXXFLAGS) $(TEST_SRC) -o $(TEST_BIN)
+	./$(TEST_BIN)
 
 setup:
 	ssh $(REMOTE) 'echo "source $(VIVADO_SETTINGS)" >> ~/.bash_profile && echo "source $(VITIS_SETTINGS)" >> ~/.bash_profile'
