@@ -15,7 +15,7 @@ struct Bary {
   float u, v, w;
 };
 
-struct SubAreas {
+struct SubAreas { // triangles formed by lines connecting p to all vertices
   int bcp, cap, abp;
 };
 
@@ -42,7 +42,7 @@ constexpr void get_barycentric_coordinates(const Triangle &T, Point p,
   // u -> BCP / ABC, v -> CAP / ABC, w -> ABP / ABC
   float u = areas.bcp / ABC;
   float v = areas.cap / ABC;
-  float w = areas.abp / ABC;
+  float w = 1 - u - v; // avoid unnecessary division
 
   coords = {u, v, w};
 }
