@@ -4,10 +4,19 @@
 
 #include "framebuffer.hpp"
 #include "geometry.hpp"
+#include "pixel.hpp"
 
 constexpr int FB_W = 1280;
 constexpr int FB_H = 720;
 constexpr int BURST_BITS = 128;
+
+constexpr Pixel color_pixel(const Triangle &T, const SubAreas &areas) {
+  Bary c = to_barycentric(areas);
+  float intensity = c.u * T.intensities[0] + c.v * T.intensities[1] +
+                    c.w * T.intensities[2];
+  auto g = static_cast<std::uint8_t>(std::clamp(intensity, 0.0f, 1.0f) * 255.0f);
+  return rgba(g, g, g, 0);
+}
 
 template <int W> void fill_span(Pixel *line, const Triangle &T, int y) {
   int min_x = std::clamp(std::min({T.a.x, T.b.x, T.c.x}), 0, W - 1);
@@ -22,8 +31,11 @@ template <int W> void fill_span(Pixel *line, const Triangle &T, int y) {
 #pragma HLS loop_tripcount min = 1 max = W
 #pragma HLS pipeline II = 1
 #endif
-    if (is_inside_triangle(T, {x, y}))
-      line[x] = T.color;
+    Point p = {x, y};
+    SubAreas areas;
+    get_sub_areas(T, p, areas);
+    if (is_inside_triangle(areas))
+      line[x] = color_pixel(T, areas);
   }
 }
 
