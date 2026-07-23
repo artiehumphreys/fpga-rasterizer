@@ -31,11 +31,10 @@ constexpr void get_sub_areas(const Triangle &T, Point p, SubAreas &areas) {
 }
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle//barycentric-coordinates.html
-constexpr Bary to_barycentric(const SubAreas &areas) {
-  float ABC = static_cast<float>(areas.bcp) + areas.cap + areas.abp;
+constexpr Bary to_barycentric(const SubAreas &areas, float inv_area) {
   // u -> BCP / ABC, v -> CAP / ABC, w -> ABP / ABC
-  float u = areas.bcp / ABC;
-  float v = areas.cap / ABC;
+  float u = areas.bcp * inv_area;
+  float v = areas.cap * inv_area;
   float w = 1 - u - v; // avoid unnecessary division
   return {u, v, w};
 }
