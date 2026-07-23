@@ -50,7 +50,7 @@ constexpr bool is_inside_triangle(const SubAreas &areas) {
   return !(has_neg && has_pos); // mixed signs -> outside
 }
 
-constexpr bool is_inside_triangle(const Triangle &T, Point p) {
+inline bool is_inside_triangle(const Triangle &T, Point p) {
   SubAreas areas;
   get_sub_areas(T, p, areas);
   return is_inside_triangle(areas);
