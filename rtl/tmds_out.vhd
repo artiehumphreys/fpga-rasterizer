@@ -1,8 +1,8 @@
--- Framebuffer scanout TMDS output: fcayci rgb2tmds + a pixel-domain POR.
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+-- Framebuffer scanout TMDS output: fcayci rgb2tmds + a pixel-domain POR.
 entity tmds_out is
     port (
         pixclk : in std_logic; -- 75 MHz
@@ -25,9 +25,7 @@ architecture rtl of tmds_out is
     signal rst : std_logic;
     signal rgb : std_logic_vector(23 downto 0);
 begin
-    -- 256-cycle pixel-domain POR. OSERDESE2 latches garbage if it leaves reset
-    -- before pixclk/serclk are stable; the counter runs off pixclk so it cannot
-    -- expire before pixclk exists (self-gates on clock stability)
+    -- 256-cycle pixel-domain POR
     por_proc : process (pixclk)
     begin
         if rising_edge(pixclk) then
@@ -44,8 +42,6 @@ begin
     end process;
     rst <= por;
 
-    -- Pixel is RGBA little-endian (R=LSB) 
-    -- NOTE: Swap if R and B are inverted
     rgb <= vid_data(7 downto 0) & vid_data(15 downto 8) & vid_data(23 downto 16);
 
     tmds : entity work.rgb2tmds(rtl)

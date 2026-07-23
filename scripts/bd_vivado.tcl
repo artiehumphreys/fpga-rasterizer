@@ -421,12 +421,16 @@ proc create_root_design { parentCell } {
     CONFIG.CLKOUT2_PHASE_ERROR {164.985} \
     CONFIG.CLKOUT2_REQUESTED_OUT_FREQ {200.000} \
     CONFIG.CLKOUT2_USED {true} \
+    CONFIG.CLKOUT3_JITTER {162.035} \
+    CONFIG.CLKOUT3_PHASE_ERROR {164.985} \
+    CONFIG.CLKOUT3_USED {true} \
     CONFIG.MMCM_CLKFBOUT_MULT_F {20.000} \
     CONFIG.MMCM_CLKIN1_PERIOD {20.000} \
     CONFIG.MMCM_CLKIN2_PERIOD {10.0} \
     CONFIG.MMCM_CLKOUT0_DIVIDE_F {6.000} \
     CONFIG.MMCM_CLKOUT1_DIVIDE {5} \
-    CONFIG.NUM_OUT_CLKS {2} \
+    CONFIG.MMCM_CLKOUT2_DIVIDE {10} \
+    CONFIG.NUM_OUT_CLKS {3} \
     CONFIG.PRIM_IN_FREQ {50} \
     CONFIG.RESET_PORT {resetn} \
     CONFIG.RESET_TYPE {ACTIVE_LOW} \
@@ -447,7 +451,7 @@ proc create_root_design { parentCell } {
   # Create instance: smartconnect_0, and set properties
   set smartconnect_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect:1.0 smartconnect_0 ]
   set_property -dict [list \
-    CONFIG.NUM_CLKS {2} \
+    CONFIG.NUM_CLKS {3} \
     CONFIG.NUM_SI {3} \
   ] $smartconnect_0
 
@@ -494,8 +498,12 @@ proc create_root_design { parentCell } {
   # Create instance: v_tc_0, and set properties
   set v_tc_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:v_tc:6.2 v_tc_0 ]
   set_property -dict [list \
+    CONFIG.GEN_HSYNC_POLARITY {High} \
+    CONFIG.GEN_VIDEO_FORMAT {RGB} \
+    CONFIG.GEN_VSYNC_POLARITY {High} \
     CONFIG.HAS_AXI4_LITE {false} \
     CONFIG.enable_detection {false} \
+    CONFIG.enable_generation {true} \
   ] $v_tc_0
 
 
@@ -554,6 +562,9 @@ proc create_root_design { parentCell } {
   ] $axis_subset_converter_0
 
 
+  # Create instance: proc_sys_reset_0, and set properties
+  set proc_sys_reset_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_0 ]
+
   # Create interface connections
   connect_bd_intf_net -intf_net axis_subset_converter_0_M_AXIS [get_bd_intf_pins axis_subset_converter_0/M_AXIS] [get_bd_intf_pins v_axi4s_vid_out_0/video_in]
   connect_bd_intf_net -intf_net jtag_axi_0_M_AXI [get_bd_intf_pins jtag_axi_0/M_AXI] [get_bd_intf_pins smartconnect_0/S00_AXI]
@@ -572,41 +583,46 @@ proc create_root_design { parentCell } {
   [get_bd_pins mig_7series_0/sys_clk_i] \
   [get_bd_pins jtag_axi_0/aclk] \
   [get_bd_pins smartconnect_0/aclk] \
-  [get_bd_pins rasterizer_rst_166M/slowest_sync_clk] \
-  [get_bd_pins video_cdc_fifo/s_axis_aclk] \
-  [get_bd_pins rasterizer_0/ap_clk] \
-  [get_bd_pins scanout_0/ap_clk]
+  [get_bd_pins rasterizer_rst_166M/slowest_sync_clk]
   connect_bd_net -net clk_wiz_0_clk_out2  [get_bd_pins clk_wiz_rasterizer/clk_out2] \
   [get_bd_pins mig_7series_0/clk_ref_i] \
   [get_bd_pins clk_wiz_pixel/clk_in1]
   connect_bd_net -net clk_wiz_0_locked  [get_bd_pins clk_wiz_rasterizer/locked] \
-  [get_bd_pins rasterizer_rst_166M/dcm_locked]
+  [get_bd_pins rasterizer_rst_166M/dcm_locked] \
+  [get_bd_pins proc_sys_reset_0/dcm_locked]
   connect_bd_net -net clk_wiz_1_clk_out1  [get_bd_pins clk_wiz_pixel/clk_out1] \
   [get_bd_pins pixel_rst_75M/slowest_sync_clk] \
   [get_bd_pins video_cdc_fifo/m_axis_aclk] \
   [get_bd_pins v_tc_0/clk] \
   [get_bd_pins v_axi4s_vid_out_0/aclk] \
   [get_bd_pins v_axi4s_vid_out_0/vid_io_out_clk] \
-  [get_bd_pins tmds_out_0/pixclk] \
-  [get_bd_pins axis_subset_converter_0/aclk]
+  [get_bd_pins axis_subset_converter_0/aclk] \
+  [get_bd_pins tmds_out_0/pixclk]
   connect_bd_net -net clk_wiz_1_locked  [get_bd_pins clk_wiz_pixel/locked] \
   [get_bd_pins pixel_rst_75M/dcm_locked]
   connect_bd_net -net clk_wiz_pixel_clk_out2  [get_bd_pins clk_wiz_pixel/clk_out2] \
   [get_bd_pins tmds_out_0/serclk]
+  connect_bd_net -net clk_wiz_rasterizer_clk_out3  [get_bd_pins clk_wiz_rasterizer/clk_out3] \
+  [get_bd_pins proc_sys_reset_0/slowest_sync_clk] \
+  [get_bd_pins scanout_0/ap_clk] \
+  [get_bd_pins rasterizer_0/ap_clk] \
+  [get_bd_pins video_cdc_fifo/s_axis_aclk] \
+  [get_bd_pins smartconnect_0/aclk2]
   connect_bd_net -net mig_7series_0_mmcm_locked  [get_bd_pins mig_7series_0/mmcm_locked] \
   [get_bd_pins mig_7series_rst_83M/dcm_locked]
   connect_bd_net -net mig_7series_0_ui_clk  [get_bd_pins mig_7series_0/ui_clk] \
-  [get_bd_pins smartconnect_0/aclk1] \
-  [get_bd_pins mig_7series_rst_83M/slowest_sync_clk]
+  [get_bd_pins mig_7series_rst_83M/slowest_sync_clk] \
+  [get_bd_pins smartconnect_0/aclk1]
   connect_bd_net -net pixel_rst_75M_peripheral_aresetn  [get_bd_pins pixel_rst_75M/peripheral_aresetn] \
   [get_bd_pins v_tc_0/resetn] \
   [get_bd_pins axis_subset_converter_0/aresetn] \
   [get_bd_pins v_axi4s_vid_out_0/aresetn]
-  connect_bd_net -net rst_clk_wiz_0_166M_peripheral_aresetn  [get_bd_pins rasterizer_rst_166M/peripheral_aresetn] \
-  [get_bd_pins jtag_axi_0/aresetn] \
-  [get_bd_pins video_cdc_fifo/s_axis_aresetn] \
+  connect_bd_net -net proc_sys_reset_0_peripheral_aresetn  [get_bd_pins proc_sys_reset_0/peripheral_aresetn] \
+  [get_bd_pins scanout_0/ap_rst_n] \
   [get_bd_pins rasterizer_0/ap_rst_n] \
-  [get_bd_pins scanout_0/ap_rst_n]
+  [get_bd_pins video_cdc_fifo/s_axis_aresetn]
+  connect_bd_net -net rst_clk_wiz_0_166M_peripheral_aresetn  [get_bd_pins rasterizer_rst_166M/peripheral_aresetn] \
+  [get_bd_pins jtag_axi_0/aresetn]
   connect_bd_net -net rst_mig_7series_0_83M_peripheral_aresetn  [get_bd_pins mig_7series_rst_83M/peripheral_aresetn] \
   [get_bd_pins mig_7series_0/aresetn] \
   [get_bd_pins smartconnect_0/aresetn]
@@ -619,7 +635,8 @@ proc create_root_design { parentCell } {
   [get_bd_pins clk_wiz_rasterizer/resetn] \
   [get_bd_pins clk_wiz_pixel/resetn] \
   [get_bd_pins pixel_rst_75M/ext_reset_in] \
-  [get_bd_pins tmds_out_0/sys_rst_n]
+  [get_bd_pins tmds_out_0/sys_rst_n] \
+  [get_bd_pins proc_sys_reset_0/ext_reset_in]
   connect_bd_net -net tmds_out_0_HDMI_CLK  [get_bd_pins tmds_out_0/HDMI_CLK] \
   [get_bd_ports HDMI_CLK]
   connect_bd_net -net tmds_out_0_HDMI_CLK_N  [get_bd_pins tmds_out_0/HDMI_CLK_N] \
