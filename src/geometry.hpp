@@ -1,5 +1,6 @@
 #pragma once
 
+#include "pixel.hpp"
 struct Point {
   int x, y;
 };
@@ -7,6 +8,7 @@ struct Point {
 struct Triangle {
   Point a, b, c;
   float intensities[3];
+  Pixel color;
 };
 
 struct Bary {
