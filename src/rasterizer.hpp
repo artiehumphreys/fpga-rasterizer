@@ -10,7 +10,7 @@ constexpr int FB_W = 1280;
 constexpr int FB_H = 720;
 constexpr int BURST_BITS = 128;
 
-constexpr std::uint8_t get_channel(std::uint8_t channel, float intensity) {
+constexpr std::uint8_t scale_channel(std::uint8_t channel, float intensity) {
   float val = intensity * channel + 0.5f; // rounding
   return static_cast<uint8_t>(std::clamp(val, 0.0f, 255.0f));
 };
@@ -22,9 +22,9 @@ constexpr Pixel color_pixel(const Triangle &T, const SubAreas &areas,
       c.u * T.intensities[0] + c.v * T.intensities[1] + c.w * T.intensities[2];
   float adjusted_intensity = std::clamp(intensity, 0.0f, 1.0f);
 
-  Pixel out = rgba(get_channel(red(T.color), adjusted_intensity),
-                   get_channel(green(T.color), adjusted_intensity),
-                   get_channel(blue(T.color), adjusted_intensity), 0);
+  Pixel out = rgba(scale_channel(red(T.color), adjusted_intensity),
+                   scale_channel(green(T.color), adjusted_intensity),
+                   scale_channel(blue(T.color), adjusted_intensity), 0);
   return out;
 }
 
