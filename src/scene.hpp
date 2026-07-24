@@ -18,4 +18,3 @@ inline Triangle scene[] = {{{400, 133},
                             {200, 600},
                             {0.4f, 0.6f, 0.8f},
                             rgba(0x00, 0x00, 0xFF, 0x00)}};
-inline constexpr int scene_count = sizeof(scene) / sizeof(scene[0]);

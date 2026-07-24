@@ -28,7 +28,7 @@ void rasterizer(Pixel *fb_mem, hls::stream<bool> &ready,
 
     Pixel *buff = fb_mem + curr * (FB_W * FB_H);
     FrameBuffer<FB_W, FB_H> fb{buff};
-    render_frame(fb, scene, scene_count);
+    render_frame(fb, scene);
     ++t;
 
     // handshake (swap buffers)

@@ -12,7 +12,7 @@ int main() {
   // DDR3.
   auto buf = std::make_unique<Pixel[]>(FB_W * FB_H);
   FrameBuffer<FB_W, FB_H> fb{buf.get()};
-  render_frame(fb, scene, scene_count);
+  render_frame(fb, scene);
 
   const char *hex = "golden_fb.hex";
   std::FILE *f = std::fopen(hex, "w");
