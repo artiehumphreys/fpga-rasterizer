@@ -88,8 +88,17 @@ void draw_triangles(FrameBuffer<W, H> &fb, const Triangle *tris, int n) {
   }
 }
 
-template <int W, int H>
-void render_frame(FrameBuffer<W, H> &fb, const Triangle *tris, int n) {
+template <int W, int H, std::size_t N>
+void render_frame(FrameBuffer<W, H> &fb, const Triangle (&tris)[N]) {
+  float inv_areas[N];
+  for (std::size_t t = 0; t < N; ++t) {
+#ifdef __SYNTHESIS__
+#pragma HLS pipeline II = 1
+#endif
+    Triangle T = tris[t];
+    inv_areas[t] = 1.0f / calculate_cross_product(T.a, T.b, T.c);
+  }
+
   for (int y = 0; y < H; ++y) {
     Pixel line[W];
 
@@ -100,10 +109,8 @@ void render_frame(FrameBuffer<W, H> &fb, const Triangle *tris, int n) {
       line[x] = 0;
     }
 
-    for (int t = 0; t < n; ++t) {
-      Triangle T = tris[t];
-      float inv_area = 1.0f / calculate_cross_product(T.a, T.b, T.c);
-      fill_span<W>(line, T, y, inv_area);
+    for (std::size_t t = 0; t < N; ++t) {
+      fill_span<W>(line, tris[t], y, inv_areas[t]);
     }
 
     for (int x = 0; x < W; ++x) {
