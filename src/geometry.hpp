@@ -5,8 +5,18 @@ struct Point {
   int x, y;
 };
 
-struct Triangle {
+struct vec3 {
+  float x, y, z;
+};
+
+struct Triangle { // 2D pixel-space, rasterizer input
   Point a, b, c;
+  float intensities[3];
+  Pixel color;
+};
+
+struct Tri3 { // 3D model-space
+  vec3 a, b, c;
   float intensities[3];
   Pixel color;
 };
@@ -54,4 +64,17 @@ inline bool is_inside_triangle(const Triangle &T, Point p) {
   SubAreas areas;
   get_sub_areas(T, p, areas);
   return is_inside_triangle(areas);
+}
+
+template <int W, int H> constexpr Point project(vec3 v, float focal) {
+  float recip = -1.0f / v.z;
+  float x = focal * v.x * recip;
+  float y = focal * v.y * recip;
+
+  // map normalized coords [-1,1] to pixels: offset to center, scale by half
+  // NOTE: screen y grows down
+  float half = H * 0.5f;
+  int sx = static_cast<int>(W * 0.5f + x * half + 0.5f);
+  int sy = static_cast<int>(H * 0.5f - y * half + 0.5f);
+  return {sx, sy};
 }
