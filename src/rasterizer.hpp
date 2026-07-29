@@ -90,6 +90,8 @@ void draw_triangles(FrameBuffer<W, H> &fb, const Triangle *tris, int n) {
 
 template <int W, int H, std::size_t N>
 void render_frame(FrameBuffer<W, H> &fb, const Triangle (&tris)[N]) {
+  // NOTE: Can hoist this calculation further (once on startup) if triangle
+  // areas are guaranteed to be invariant.
   float inv_areas[N];
   for (std::size_t t = 0; t < N; ++t) {
 #ifdef __SYNTHESIS__
