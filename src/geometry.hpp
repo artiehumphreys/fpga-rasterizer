@@ -78,3 +78,11 @@ template <int W, int H> constexpr Point project(vec3 v, float focal) {
   int sy = static_cast<int>(H * 0.5f - y * half + 0.5f);
   return {sx, sy};
 }
+
+template <int W, int H> constexpr Triangle project(const Tri3 &t, float focal) {
+  return {project<W, H>(t.a, focal),
+          project<W, H>(t.b, focal),
+          project<W, H>(t.c, focal),
+          {t.intensities[0], t.intensities[1], t.intensities[2]},
+          t.color};
+}
