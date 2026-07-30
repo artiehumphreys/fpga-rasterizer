@@ -66,7 +66,7 @@ inline bool is_inside_triangle(const Triangle &T, Point p) {
   return is_inside_triangle(areas);
 }
 
-template <int W, int H> constexpr Point project(vec3 v, float focal) {
+template <int W, int H> constexpr Point project_vertex(vec3 v, float focal) {
   float recip = -1.0f / v.z;
   float x = focal * v.x * recip;
   float y = focal * v.y * recip;
@@ -80,9 +80,9 @@ template <int W, int H> constexpr Point project(vec3 v, float focal) {
 }
 
 template <int W, int H> constexpr Triangle project(const Tri3 &t, float focal) {
-  return {project<W, H>(t.a, focal),
-          project<W, H>(t.b, focal),
-          project<W, H>(t.c, focal),
+  return {project_vertex<W, H>(t.a, focal),
+          project_vertex<W, H>(t.b, focal),
+          project_vertex<W, H>(t.c, focal),
           {t.intensities[0], t.intensities[1], t.intensities[2]},
           t.color};
 }

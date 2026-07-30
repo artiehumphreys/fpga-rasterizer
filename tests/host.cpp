@@ -106,11 +106,45 @@ void test_shading() {
   assert(near(gray(1, 1), 175));
 }
 
+void test_project() {
+  const int W = 100, H = 100;
+  const float f = 1.0f;
+
+  vec3 p1 = {0, 0, -5}, p2 = {1, 0, -1}, p3 = {0, 1, -1}, p4 = {1, 0, -2};
+
+  // center
+  Point c = project_vertex<W, H>(p1, f);
+  assert(c.x == 50 && c.y == 50);
+
+  // x edge
+  Point r = project_vertex<W, H>(p2, f);
+  assert(r.x == 100 && r.y == 50);
+
+  // y flip
+  Point t = project_vertex<W, H>(p3, f);
+  assert(t.x == 50 && t.y == 0);
+
+  // perspective shrink (2x farther -> half offset)
+  Point d = project_vertex<W, H>(p4, f);
+  assert(d.x == 75 && d.y == 50);
+
+  // triangle passthrough
+  Tri3 tri{p1, p2, p3, {0.2f, 0.4f, 0.6f}, rgba(10, 20, 30, 0)};
+  Triangle p = project<W, H>(tri, f);
+  assert(p.a.x == 50 && p.a.y == 50);
+  assert(p.b.x == 100 && p.b.y == 50);
+  assert(p.c.x == 50 && p.c.y == 0);
+  assert(p.color == rgba(10, 20, 30, 0));
+  assert(p.intensities[0] == 0.2f && p.intensities[1] == 0.4f &&
+         p.intensities[2] == 0.6f);
+}
+
 int main() {
   test_triangle_rasterization();
   test_draw_triangles_draws_all();
   test_clips_offscreen_triangle();
   test_offscreen_triangle_draws_nothing();
   test_shading();
+  test_project();
   return 0;
 }
