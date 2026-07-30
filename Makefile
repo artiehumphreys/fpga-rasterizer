@@ -30,7 +30,12 @@ test: $(TEST_SRC)
 setup:
 	ssh $(REMOTE) 'echo "source $(VIVADO_SETTINGS)" >> ~/.bash_profile && echo "source $(VITIS_SETTINGS)" >> ~/.bash_profile'
 
+CONFIG ?= rasterizer_config.cfg
 WORKDIR=$(CONFIG:.cfg=)
+TOP=$(WORKDIR:_config=)
+
+report:
+	scp $(REMOTE):$(REMOTE_DIR)/$(WORKDIR)/hls/syn/report/$(TOP)_csynth.rpt ./csynth.rpt
 
 sync:
 	rsync -avz --exclude 'build*/' --exclude '*_config/' ./ $(REMOTE):$(REMOTE_DIR)/
