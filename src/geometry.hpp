@@ -66,6 +66,13 @@ inline bool is_inside_triangle(const Triangle &T, Point p) {
   return is_inside_triangle(areas);
 }
 
+constexpr vec3 rotate_x(vec3 v, float s, float c) {
+  return {v.x, c * v.y - s * v.z, s * v.y + c * v.z};
+}
+constexpr vec3 rotate_y(vec3 v, float s, float c) {
+  return {c * v.x + s * v.z, v.y, -s * v.x + c * v.z};
+}
+
 template <int W, int H> constexpr Point project_vertex(vec3 v, float focal) {
   float recip = -1.0f / v.z;
   float x = focal * v.x * recip;
