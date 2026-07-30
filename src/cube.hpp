@@ -3,12 +3,14 @@
 #include "geometry.hpp"
 
 constexpr int h = 1;
-constexpr vec3 cube_verts[8] = {{-h, -h, -h}, {h, -h, -h}, {-h, h, -h},
-                                {h, h, -h},   {-h, -h, h}, {h, -h, h},
-                                {-h, h, h},   {h, h, h}};
 
+constexpr int VERTICES = 8;
 constexpr int CUBE_FACES = 6;
 constexpr int CUBE_TRIS = CUBE_FACES * 2;
+
+constexpr vec3 cube_verts[VERTICES] = {{-h, -h, -h}, {h, -h, -h}, {-h, h, -h},
+                                       {h, h, -h},   {-h, -h, h}, {h, -h, h},
+                                       {-h, h, h},   {h, h, h}};
 
 constexpr int faces[CUBE_FACES][4] = {
     // NOTE: CCW ordering of vertices required for back culling

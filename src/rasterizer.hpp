@@ -123,3 +123,21 @@ void render_frame(FrameBuffer<W, H> &fb, const Triangle (&tris)[N]) {
     }
   }
 }
+
+template <int W, int H, std::size_t N>
+void render_cube(FrameBuffer<W, H> &fb, const Tri3 (&tris)[N], float focal,
+                 float z_offset) {
+  fb.clear();
+  for (std::size_t i = 0; i < N; ++i) {
+    Tri3 t = tris[i];
+    t.a.z += z_offset; // push away from camera along -z
+    t.b.z += z_offset;
+    t.c.z += z_offset;
+
+    Triangle s = project<W, H>(t, focal);
+
+    // back-face cull
+    if (calculate_cross_product(s.a, s.b, s.c) < 0)
+      draw_triangle(fb, s);
+  }
+}
