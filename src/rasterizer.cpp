@@ -1,6 +1,6 @@
 #include "rasterizer.hpp"
-#include "hls_stream.h"
 #include "cube.hpp"
+#include "hls_stream.h"
 
 void rasterizer(Pixel *fb_mem, hls::stream<bool> &ready,
                 hls::stream<bool> &freed) {
@@ -14,13 +14,15 @@ void rasterizer(Pixel *fb_mem, hls::stream<bool> &ready,
 #endif
 
   static bool curr = false;
+  static float angle = 0.0f;
   Tri3 cube[CUBE_TRIS];
   build_cube(cube);
 
   for (;;) {
     Pixel *buff = fb_mem + curr * (FB_W * FB_H);
     FrameBuffer<FB_W, FB_H> fb{buff};
-    render_cube(fb, cube, 1.0f, -5.0f);
+    render_cube(fb, cube, 1.0f, -5.0f, angle);
+    angle += 0.02f;
 
     // handshake (swap buffers)
     ready << curr;
