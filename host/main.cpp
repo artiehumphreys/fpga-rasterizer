@@ -3,16 +3,20 @@
 #include <cstring>
 #include <memory>
 
+#include "cube.hpp"
 #include "ppm.hpp"
 #include "rasterizer.hpp"
-#include "scene.hpp"
 
 int main() {
   // heap-allocated: ~3.7 MB, too big for the stack. On hardware this lives in
   // DDR3.
   auto buf = std::make_unique<Pixel[]>(FB_W * FB_H);
   FrameBuffer<FB_W, FB_H> fb{buf.get()};
-  render_frame(fb, scene);
+
+  Tri3 cube[CUBE_TRIS];
+  build_cube(cube);
+  render_cube(fb, cube, 1.0f, -5.0f);
+  write_ppm(fb, "cube.ppm"); // eyeball check
 
   const char *hex = "golden_fb.hex";
   std::FILE *f = std::fopen(hex, "w");
