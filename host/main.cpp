@@ -15,8 +15,8 @@ int main() {
 
   Tri3 cube[CUBE_TRIS];
   build_cube(cube);
-  render_cube(fb, cube, 1.0f, -5.0f);
-  write_ppm(fb, "cube.ppm"); // eyeball check
+  render_cube(fb, cube, 1.0f, -5.0f, 0.6f); // fixed angle, eyeball check
+  write_ppm(fb, "cube.ppm");
 
   const char *hex = "golden_fb.hex";
   std::FILE *f = std::fopen(hex, "w");
