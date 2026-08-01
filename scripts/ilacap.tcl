@@ -13,18 +13,13 @@ puts "ilacap: ila = $ila"
 puts "ilacap: probes ="
 foreach p [get_hw_probes -of_objects $ila] { puts "   $p" }
 
-set awv [lindex [get_hw_probes -of_objects $ila -regexp {.*awvalid}] 0]
-set_property TRIGGER_COMPARE_VALUE eq1'b1 $awv
-set_property CONTROL.TRIGGER_POSITION 256 $ila
+set tv [lindex [get_hw_probes -of_objects $ila -regexp {.*ready.*[Tt][Vv]alid}] 0]
+set_property TRIGGER_COMPARE_VALUE eq1'b1 $tv
+set_property CONTROL.TRIGGER_POSITION 64 $ila
+set_property CONTROL.DATA_DEPTH 4096 $ila
 run_hw_ila $ila
 
-set axi [lindex [get_hw_axis] 0]
-proc wr {axi addr data} { delete_hw_axi_txn -quiet t; create_hw_axi_txn t $axi -address $addr -data $data -type write; run_hw_axi t }
-wr $axi 00000010 80000000
-wr $axi 00000014 00000000
-wr $axi 00000000 00000001
-
 set fired [wait_on_hw_ila -timeout 10 $ila]
-puts "ilacap: trigger fired = $fired (0/false = AWVALID never asserted)"
+puts "ilacap: trigger fired = $fired (0/false = ready TVALID never asserted)"
 write_hw_ila_data -csv_file ila.csv -force [upload_hw_ila_data $ila]
 puts "ilacap: wrote ila.csv"
