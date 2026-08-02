@@ -5,8 +5,18 @@ struct Point {
   int x, y;
 };
 
-struct Triangle {
+struct vec3 {
+  float x, y, z;
+};
+
+struct Triangle { // 2D pixel-space, rasterizer input
   Point a, b, c;
+  float intensities[3];
+  Pixel color;
+};
+
+struct Tri3 { // 3D model-space
+  vec3 a, b, c;
   float intensities[3];
   Pixel color;
 };
@@ -54,4 +64,32 @@ inline bool is_inside_triangle(const Triangle &T, Point p) {
   SubAreas areas;
   get_sub_areas(T, p, areas);
   return is_inside_triangle(areas);
+}
+
+constexpr vec3 rotate_x(vec3 v, float s, float c) {
+  return {v.x, c * v.y - s * v.z, s * v.y + c * v.z};
+}
+constexpr vec3 rotate_y(vec3 v, float s, float c) {
+  return {c * v.x + s * v.z, v.y, -s * v.x + c * v.z};
+}
+
+template <int W, int H> constexpr Point project_vertex(vec3 v, float focal) {
+  float recip = -1.0f / v.z;
+  float x = focal * v.x * recip;
+  float y = focal * v.y * recip;
+
+  // map normalized coords [-1,1] to pixels: offset to center, scale by half
+  // NOTE: screen y grows down
+  float half = H * 0.5f;
+  int sx = static_cast<int>(W * 0.5f + x * half + 0.5f);
+  int sy = static_cast<int>(H * 0.5f - y * half + 0.5f);
+  return {sx, sy};
+}
+
+template <int W, int H> constexpr Triangle project(const Tri3 &t, float focal) {
+  return {project_vertex<W, H>(t.a, focal),
+          project_vertex<W, H>(t.b, focal),
+          project_vertex<W, H>(t.c, focal),
+          {t.intensities[0], t.intensities[1], t.intensities[2]},
+          t.color};
 }

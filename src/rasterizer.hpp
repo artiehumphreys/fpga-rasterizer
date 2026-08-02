@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
 
 #include "framebuffer.hpp"
 #include "geometry.hpp"
@@ -88,8 +89,10 @@ void draw_triangles(FrameBuffer<W, H> &fb, const Triangle *tris, int n) {
   }
 }
 
+// build each scanline in a local buffer, then write out once
 template <int W, int H>
-void render_frame(FrameBuffer<W, H> &fb, const Triangle *tris, int n) {
+void render_spans(FrameBuffer<W, H> &fb, const Triangle *tris,
+                  const float *inv_areas, int n, Pixel bg = 0) {
   for (int y = 0; y < H; ++y) {
     Pixel line[W];
 
@@ -97,13 +100,14 @@ void render_frame(FrameBuffer<W, H> &fb, const Triangle *tris, int n) {
 #ifdef __SYNTHESIS__
 #pragma HLS pipeline II = 1
 #endif
-      line[x] = 0;
+      line[x] = bg;
     }
 
     for (int t = 0; t < n; ++t) {
-      Triangle T = tris[t];
-      float inv_area = 1.0f / calculate_cross_product(T.a, T.b, T.c);
-      fill_span<W>(line, T, y, inv_area);
+#ifdef __SYNTHESIS__
+#pragma HLS loop_tripcount min = 0 max = 32
+#endif
+      fill_span<W>(line, tris[t], y, inv_areas[t]);
     }
 
     for (int x = 0; x < W; ++x) {
@@ -113,4 +117,53 @@ void render_frame(FrameBuffer<W, H> &fb, const Triangle *tris, int n) {
       fb.data[y * W + x] = line[x];
     }
   }
+}
+
+template <int W, int H, std::size_t N>
+void render_frame(FrameBuffer<W, H> &fb, const Triangle (&tris)[N]) {
+  // NOTE: Can hoist this calculation further (once on startup) if triangle
+  // areas are guaranteed to be invariant.
+  float inv_areas[N];
+  for (std::size_t t = 0; t < N; ++t) {
+#ifdef __SYNTHESIS__
+#pragma HLS pipeline II = 1
+#endif
+    Triangle T = tris[t];
+    inv_areas[t] = 1.0f / calculate_cross_product(T.a, T.b, T.c);
+  }
+
+  render_spans<W, H>(fb, tris, inv_areas, N);
+}
+
+template <int W, int H, std::size_t N>
+void render_cube(FrameBuffer<W, H> &fb, const Tri3 (&tris)[N], float focal,
+                 float z_offset, float angle) {
+  // trig once per frame
+  // TODO: optimize
+  float s = std::sin(angle);
+  float c = std::cos(angle);
+
+  Triangle in_front[N];
+  float inv_areas[N];
+
+  int n = 0;
+  for (std::size_t i = 0; i < N; ++i) {
+    Tri3 t = tris[i];
+    t.a = rotate_x(rotate_y(t.a, s, c), s, c);
+    t.b = rotate_x(rotate_y(t.b, s, c), s, c);
+    t.c = rotate_x(rotate_y(t.c, s, c), s, c);
+    t.a.z += z_offset; // push away from camera along -z
+    t.b.z += z_offset;
+    t.c.z += z_offset;
+
+    Triangle sc = project<W, H>(t, focal);
+    int area = calculate_cross_product(sc.a, sc.b, sc.c);
+    // back-face cull
+    if (area < 0) {
+      in_front[n] = sc;
+      inv_areas[n] = 1.0f / area;
+      ++n;
+    }
+  }
+  render_spans<W, H>(fb, in_front, inv_areas, n);
 }

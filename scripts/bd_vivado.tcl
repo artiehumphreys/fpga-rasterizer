@@ -147,6 +147,7 @@ xilinx.com:ip:axis_data_fifo:2.0\
 xilinx.com:ip:v_tc:6.2\
 xilinx.com:ip:v_axi4s_vid_out:4.0\
 xilinx.com:ip:axis_subset_converter:1.1\
+xilinx.com:ip:system_ila:1.1\
 "
 
    set list_ips_missing ""
@@ -565,12 +566,40 @@ proc create_root_design { parentCell } {
   # Create instance: proc_sys_reset_0, and set properties
   set proc_sys_reset_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_0 ]
 
+  # Create instance: system_ila_0, and set properties
+  set system_ila_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:system_ila:1.1 system_ila_0 ]
+  set_property -dict [list \
+    CONFIG.C_MON_TYPE {INTERFACE} \
+    CONFIG.C_NUM_MONITOR_SLOTS {2} \
+    CONFIG.C_SLOT_0_APC_EN {0} \
+    CONFIG.C_SLOT_0_AXI_DATA_SEL {1} \
+    CONFIG.C_SLOT_0_AXI_TRIG_SEL {1} \
+    CONFIG.C_SLOT_0_INTF_TYPE {xilinx.com:interface:axis_rtl:1.0} \
+    CONFIG.C_SLOT_1_APC_EN {0} \
+    CONFIG.C_SLOT_1_AXI_AR_SEL_DATA {1} \
+    CONFIG.C_SLOT_1_AXI_AR_SEL_TRIG {1} \
+    CONFIG.C_SLOT_1_AXI_AW_SEL_DATA {1} \
+    CONFIG.C_SLOT_1_AXI_AW_SEL_TRIG {1} \
+    CONFIG.C_SLOT_1_AXI_B_SEL_DATA {1} \
+    CONFIG.C_SLOT_1_AXI_B_SEL_TRIG {1} \
+    CONFIG.C_SLOT_1_AXI_R_SEL_DATA {1} \
+    CONFIG.C_SLOT_1_AXI_R_SEL_TRIG {1} \
+    CONFIG.C_SLOT_1_AXI_W_SEL_DATA {1} \
+    CONFIG.C_SLOT_1_AXI_W_SEL_TRIG {1} \
+    CONFIG.C_SLOT_1_INTF_TYPE {xilinx.com:interface:aximm_rtl:1.0} \
+  ] $system_ila_0
+
+
   # Create interface connections
   connect_bd_intf_net -intf_net axis_subset_converter_0_M_AXIS [get_bd_intf_pins axis_subset_converter_0/M_AXIS] [get_bd_intf_pins v_axi4s_vid_out_0/video_in]
   connect_bd_intf_net -intf_net jtag_axi_0_M_AXI [get_bd_intf_pins jtag_axi_0/M_AXI] [get_bd_intf_pins smartconnect_0/S00_AXI]
   connect_bd_intf_net -intf_net mig_7series_0_DDR3 [get_bd_intf_ports DDR3_0] [get_bd_intf_pins mig_7series_0/DDR3]
   connect_bd_intf_net -intf_net rasterizer_0_m_axi_gmem0 [get_bd_intf_pins rasterizer_0/m_axi_gmem0] [get_bd_intf_pins smartconnect_0/S01_AXI]
+connect_bd_intf_net -intf_net [get_bd_intf_nets rasterizer_0_m_axi_gmem0] [get_bd_intf_pins rasterizer_0/m_axi_gmem0] [get_bd_intf_pins system_ila_0/SLOT_1_AXI]
+  set_property HDL_ATTRIBUTE.DEBUG {true} [get_bd_intf_nets rasterizer_0_m_axi_gmem0]
   connect_bd_intf_net -intf_net rasterizer_0_ready_r [get_bd_intf_pins rasterizer_0/ready_r] [get_bd_intf_pins scanout_0/ready_r]
+connect_bd_intf_net -intf_net [get_bd_intf_nets rasterizer_0_ready_r] [get_bd_intf_pins rasterizer_0/ready_r] [get_bd_intf_pins system_ila_0/SLOT_0_AXIS]
+  set_property HDL_ATTRIBUTE.DEBUG {true} [get_bd_intf_nets rasterizer_0_ready_r]
   connect_bd_intf_net -intf_net scanout_0_freed [get_bd_intf_pins scanout_0/freed] [get_bd_intf_pins rasterizer_0/freed]
   connect_bd_intf_net -intf_net scanout_0_m_axi_gmem1 [get_bd_intf_pins scanout_0/m_axi_gmem1] [get_bd_intf_pins smartconnect_0/S02_AXI]
   connect_bd_intf_net -intf_net scanout_0_video_out [get_bd_intf_pins scanout_0/video_out] [get_bd_intf_pins video_cdc_fifo/S_AXIS]
@@ -607,7 +636,8 @@ proc create_root_design { parentCell } {
   [get_bd_pins scanout_0/ap_clk] \
   [get_bd_pins rasterizer_0/ap_clk] \
   [get_bd_pins video_cdc_fifo/s_axis_aclk] \
-  [get_bd_pins smartconnect_0/aclk2]
+  [get_bd_pins smartconnect_0/aclk2] \
+  [get_bd_pins system_ila_0/clk]
   connect_bd_net -net mig_7series_0_mmcm_locked  [get_bd_pins mig_7series_0/mmcm_locked] \
   [get_bd_pins mig_7series_rst_83M/dcm_locked]
   connect_bd_net -net mig_7series_0_ui_clk  [get_bd_pins mig_7series_0/ui_clk] \
@@ -620,7 +650,8 @@ proc create_root_design { parentCell } {
   connect_bd_net -net proc_sys_reset_0_peripheral_aresetn  [get_bd_pins proc_sys_reset_0/peripheral_aresetn] \
   [get_bd_pins scanout_0/ap_rst_n] \
   [get_bd_pins rasterizer_0/ap_rst_n] \
-  [get_bd_pins video_cdc_fifo/s_axis_aresetn]
+  [get_bd_pins video_cdc_fifo/s_axis_aresetn] \
+  [get_bd_pins system_ila_0/resetn]
   connect_bd_net -net rst_clk_wiz_0_166M_peripheral_aresetn  [get_bd_pins rasterizer_rst_166M/peripheral_aresetn] \
   [get_bd_pins jtag_axi_0/aresetn]
   connect_bd_net -net rst_mig_7series_0_83M_peripheral_aresetn  [get_bd_pins mig_7series_rst_83M/peripheral_aresetn] \
